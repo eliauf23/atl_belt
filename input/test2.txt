@@ -1,0 +1,43 @@
+60
+<begin-outside> washer
+gasket
+disk
+disk
+disk
+disk
+<begin-inside> gasket
+std_spacer
+gasket
+disk
+gasket
+std_spacer
+gasket
+disk
+gasket
+std_spacer
+gasket
+disk
+gasket
+short_spacer
+gasket
+disk
+gasket
+std_spacer
+gasket
+disk
+gasket
+std_spacer
+gasket
+disk
+gasket
+std_spacer
+gasket <end-inside>
+disk
+disk
+disk
+disk
+gasket
+washer <end-outside>
+
+
+

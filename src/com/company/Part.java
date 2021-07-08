@@ -1,48 +1,75 @@
 package com.company;
 
-import com.company.StdDraw;
+import static com.company.Main.SCALE;
+import static com.company.Main.Y_CENTER;
+
 import java.awt.Color;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 
 
-//TODO: create library of parts as a list of strings
-//make a hashmap with key = name (String) & value = part (Part)
-
-
 public class Part {
+
   private String name;
   private Color color;
   private double height;
   private double width;
 
-  //String materials; TODO: figure out how to implement materials to consturct Bill of Materials
-
   //default constructor
-  Part(String str) {
-
-    //check if string matches name of any part in library
-
-
-    //if so, construct object w/ the height, width, color associated w/ that name
-
-    for (:
-         ) {
-
-    }
-
-
+  Part(String str, HashMap<String, Part> map) {
+    this.name = str;
+    this.height = map.get(str).getHeight();
+    this.width = map.get(str).getWidth();
+    this.color = map.get(str).getColor();
 
   }
 
-  //parameterized constructor
+  //parameterized constructor w/o name
+  Part(double h, double w, Color c) {
+    this.height = h;
+    this.width = w;
+    this.color = c;
+  }
+
+  //parameterized constructor - full
   Part(double h, double w, Color c, String n) {
     this.name = n;
     this.height = h;
     this.width = w;
     this.color = c;
+  }
+
+  public static void drawPartsFromList(List<Part> partList, double total_width) {
+
+    //TODO: change this function so it draws parts from center
+    double x_current = 0.5 * (SCALE - total_width + partList.get(0).getWidth());
+    double half_width;
+
+    for (Part p : partList) {
+      half_width = 0.5 * p.getWidth();
+      x_current += half_width;
+      drawPart(p, x_current, Y_CENTER);
+      x_current += half_width;
+    }
+
+
+  }
+
+  public static double calcSumOfWidths(List<Part> partList) {
+    double sumOfWidths = 0.0;
+    for (Part p : partList) {
+      sumOfWidths += p.getWidth();
+    }
+    return sumOfWidths;
+  }
+
+  public static void drawPart(Part p, double x_current, double Y_CENTER) {
+    double height = p.getHeight();
+    double width = p.getWidth();
+    Color color = p.getColor();
+    StdDraw.setPenColor(color);
+    StdDraw.filledRectangle(x_current, Y_CENTER, width / 2.0, height / 2.0);
+
   }
 
   //getter & setter methods
@@ -69,6 +96,7 @@ public class Part {
   public void setColor(Color color) {
     this.color = color;
   }
+  //other function
 
   public String getName() {
     return this.name;
@@ -77,39 +105,36 @@ public class Part {
   public void setName(String name) {
     this.name = name;
   }
-  //other function
+
+  public static void drawShaft(double shaftLength, double sumOfWidths) {
+    //default thickness = 1 & default color is light grey
+
+    StdDraw.setPenColor(StdDraw.LIGHT_GRAY);
+
+    StdDraw.filledRectangle(SCALE/2.0, SCALE/2.0, shaftLength / 2.0, 0.25);
 
 
-  public static double drawPartsFromList(List<Part> partList, double Y_CENTER) {
-    double x_current = 0.0;
-    for (Part p: partList) {
+  }
 
-      drawPart(p, x_current, Y_CENTER);
-      x_current += p.getWidth();
+  /**
+   * Indicates whether some other object is "equal to" this one.
+   */
+  @Override
+  public boolean equals(Object obj) throws NullPointerException {
 
+    Part p = new Part(0, 0, StdDraw.BLACK);
+    if(obj != null && obj.getClass() == p.getClass()) {
+      Part obj_part = (Part) obj;
+      return obj_part.getHeight() == (this.getHeight())  && obj_part.getWidth() == (this.getWidth());
     }
-
-    return x_current;
+    return false;
   }
 
-
-  public void drawShaft(double shaftLength, double sumOfWidths, double pageWidth) {
-    //TODO: implement drawShaft function
-
+  /**
+   * Returns a string representation of the object.
+   */
+  @Override
+  public String toString() {
+    return this.getName();
   }
-
-  public static void drawPart(Part p, double x_current, double Y_CENTER) {
-    double height = p.getHeight();
-    double width = p.getWidth();
-    Color color = p.getColor();
-
-    StdDraw.setPenColor(color);
-    StdDraw.filledRectangle(x_current, Y_CENTER, width / 2.0, height / 2.0);
-
-  }
-}
-
-
-
-
 }
