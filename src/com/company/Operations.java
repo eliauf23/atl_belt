@@ -53,6 +53,18 @@ public class Operations {
     System.out.println("Bill of Materials: " + billOfMaterials.toString());
 
   }
+  //inclusive distance (index starts @ 0, ends at # of components - 1
+  public static double calcDistIncludingEndpts(List<Part> partList, int start, int end) {
+    double dist = 0.0;
+    for (int i = start; i <= end - 1; i++) {
+      dist += partList.get(i).getWidth();
+    }
+    return dist;
+  }
+
+  public static double calcDistExcludingEndpts(List<Part> partList, int start, int end) {
+    return calcDistIncludingEndpts(partList,start + 1, end - 1);
+  }
 
 
 }
