@@ -51,8 +51,6 @@ public class Part {
       drawPart(p, x_current, Y_CENTER);
       x_current += half_width;
     }
-
-
   }
 
   public static double calcSumOfWidths(List<Part> partList) {
@@ -69,6 +67,15 @@ public class Part {
     Color color = p.getColor();
     StdDraw.setPenColor(color);
     StdDraw.filledRectangle(x_current, Y_CENTER, width / 2.0, height / 2.0);
+  }
+
+  public static void drawShaft(double shaftLength, double sumOfWidths) {
+    //default thickness = 1 & default color is light grey
+
+    StdDraw.setPenColor(StdDraw.LIGHT_GRAY);
+
+    StdDraw.filledRectangle(SCALE / 2.0, SCALE / 2.0, shaftLength / 2.0, 0.25);
+
 
   }
 
@@ -92,11 +99,11 @@ public class Part {
   public Color getColor() {
     return this.color;
   }
+  //other function
 
   public void setColor(Color color) {
     this.color = color;
   }
-  //other function
 
   public String getName() {
     return this.name;
@@ -106,16 +113,6 @@ public class Part {
     this.name = name;
   }
 
-  public static void drawShaft(double shaftLength, double sumOfWidths) {
-    //default thickness = 1 & default color is light grey
-
-    StdDraw.setPenColor(StdDraw.LIGHT_GRAY);
-
-    StdDraw.filledRectangle(SCALE/2.0, SCALE/2.0, shaftLength / 2.0, 0.25);
-
-
-  }
-
   /**
    * Indicates whether some other object is "equal to" this one.
    */
@@ -123,9 +120,9 @@ public class Part {
   public boolean equals(Object obj) throws NullPointerException {
 
     Part p = new Part(0, 0, StdDraw.BLACK);
-    if(obj != null && obj.getClass() == p.getClass()) {
+    if (obj != null && obj.getClass() == p.getClass()) {
       Part obj_part = (Part) obj;
-      return obj_part.getHeight() == (this.getHeight())  && obj_part.getWidth() == (this.getWidth());
+      return obj_part.getHeight() == (this.getHeight()) && obj_part.getWidth() == (this.getWidth());
     }
     return false;
   }

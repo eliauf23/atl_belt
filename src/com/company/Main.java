@@ -26,8 +26,7 @@ public class Main {
 
     String fileName = "C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\test1.txt";
     List<Part> partList = convertFileToPartList(fileName);
-
-    HashMap<String, Integer> billOfMaterials = new HashMap<String, Integer>();
+    HashMap<String, Integer> billOfMaterials = new HashMap<>();
     PartLibrary.createBillOfMaterials(billOfMaterials, partList);
     double sumOfWidths = calcSumOfWidths(partList);
     drawShaft(shaft_len, sumOfWidths);
