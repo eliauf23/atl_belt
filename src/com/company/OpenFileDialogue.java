@@ -9,7 +9,7 @@ import javax.swing.JFileChooser;
 public class OpenFileDialogue {
   public static void main(String[] args) {
 
-    String currentDirectoryPath = "C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\atl_belt.png";
+    String currentDirectoryPath = "C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\test1.txt";
     JFileChooser fileChooser  = new JFileChooser(".");
 
     fileChooser.addActionListener(new ActionListener() {

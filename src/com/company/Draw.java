@@ -1,5 +1,12 @@
 package com.company;
 
+import static com.company.Main.shaft_len;
+import static com.company.Operations.convertFileToPartList;
+import static com.company.Operations.displayResults;
+import static com.company.Part.calcSumOfWidths;
+import static com.company.Part.drawPartsFromList;
+import static com.company.Part.drawShaft;
+
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLaf;
 import java.awt.BasicStroke;
@@ -20,15 +27,20 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -219,32 +231,62 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     JMenu fileMenu = new JMenu("File");
 
-
     menuBar.add(fileMenu);
+
+
     //Add save functionality
     JMenuItem fileMenuItem1 = new JMenuItem(" Save...   ");
-    fileMenuItem1.addActionListener(std);
+    fileMenuItem1.addActionListener(e1 -> {
+
+      FileDialog chooser = new FileDialog(Draw.frame, "Use a .png or .jpg extension", FileDialog.SAVE);
+      chooser.setVisible(true);
+      String filename = chooser.getFile();
+      if (filename != null) {
+        Draw.save(chooser.getDirectory() + File.separator + chooser.getFile());
+      }
+
+    });
     // Java 10+: replace getMenuShortcutKeyMask() with getMenuShortcutKeyMask()
     fileMenuItem1.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
         Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
     fileMenu.add(fileMenuItem1);
-    //TODO: Add "open text file functionality" DIRECTLY FROM FILE MENU
+
+
+    JMenuItem fileMenuItem2 = new JMenuItem(" Open text file   ");
+    fileMenuItem2.addActionListener(e2 -> {
+      try {
+        openFileAndDrawContents();
+      } catch (IOException ioException) {
+        ioException.printStackTrace();
+      }
+    });
+    // Java 10+: replace getMenuShortcutKeyMask() with getMenuShortcutKeyMask()
+    fileMenuItem2.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+    fileMenu.add(fileMenuItem2);
+
 
 
     //Add exit functionality
-    JMenuItem fileMenuItem2 = new JMenuItem("Exit   ");
-    fileMenuItem1.addActionListener(std);
-    fileMenuItem2.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
+    JMenuItem fileMenuItem3 = new JMenuItem(" Exit      ");
+    fileMenuItem1.addActionListener(e3 -> {
+      try {
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+      } catch (Exception exception) {
+        exception.printStackTrace();
+      }
+    });
+    fileMenuItem3.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
         Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
-    fileMenu.add(fileMenuItem2);
+    fileMenu.add(fileMenuItem3);
 
     //Add a new menu
     JMenu editMenu = new JMenu("Help");
 
 
     menuBar.add(editMenu);
-    JMenuItem editMenuItem1 = new JMenuItem("FAQ");
+    JMenuItem editMenuItem1 = new JMenuItem(" About      ");
     editMenu.add(editMenuItem1);
 
     return menuBar;
@@ -818,6 +860,40 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     return isSuccess;
   }
 
+  public static JFileChooser launchFileOpenDialogue() throws IOException {
+    JFileChooser fileChooser  = new JFileChooser((File) null);
+
+    fileChooser.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        System.out.println("File loading ...");
+      }
+    });
+
+    return fileChooser;
+  }
+
+  public static void openFileAndDrawContents() throws IOException {
+    File selectedFile;
+
+    JFileChooser fileChooser  = launchFileOpenDialogue();
+    int status = fileChooser.showOpenDialog(null);
+
+    if(status == JFileChooser.APPROVE_OPTION) {
+      selectedFile = fileChooser.getSelectedFile();
+      List<Part> partList = convertFileToPartList(selectedFile);
+      HashMap<String, Integer> billOfMaterials = new HashMap<>();
+      PartLibrary.createBillOfMaterials(billOfMaterials, partList);
+      double sumOfWidths = calcSumOfWidths(partList);
+      drawShaft(shaft_len, sumOfWidths);
+      drawPartsFromList(partList, sumOfWidths);
+      displayResults(sumOfWidths, billOfMaterials);
+    } else {
+      throw new FileNotFoundException();
+    }
+  }
+
+
   public static void main(String[] args) {
     System.out.println("draw class test");
   }
@@ -828,12 +904,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    */
   @Override
   public void actionPerformed(ActionEvent e) {
-    FileDialog chooser = new FileDialog(Draw.frame, "Use a .png or .jpg extension", FileDialog.SAVE);
-    chooser.setVisible(true);
-    String filename = chooser.getFile();
-    if (filename != null) {
-      Draw.save(chooser.getDirectory() + File.separator + chooser.getFile());
-    }
   }
 
   /**

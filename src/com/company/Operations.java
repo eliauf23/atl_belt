@@ -1,5 +1,6 @@
 package com.company;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -8,6 +9,35 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Operations {
+
+
+  public static List<Part> convertFileToPartList(File file) throws IOException {
+    PartLibrary pl = new PartLibrary();
+
+    HashMap<String, Part> library = PartLibrary.lib;
+
+    List<String> lines = Files.readAllLines(file.toPath());
+    List<Part> partList = new ArrayList<>();
+
+    int index = 0;
+    for (String str : lines) {
+      if (index == 0 && str != null) {
+        if (Double.parseDouble(str) > 0) {
+          Main.shaft_len = Double.parseDouble(str);
+        }
+      } else {
+        //trim any whitespace & add Part obj. to array list
+        assert(str!=null);
+        Part p = new Part(str.trim(), library);
+
+        partList.add(p);
+      }
+
+      index++;
+    }
+    return partList;
+  }
+
 
 
   public static List<Part> convertFileToPartList(String fileName) throws IOException {
