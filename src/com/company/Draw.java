@@ -27,7 +27,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -271,7 +270,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     JMenuItem fileMenuItem3 = new JMenuItem(" Exit      ");
     fileMenuItem1.addActionListener(e3 -> {
       try {
-        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+        //frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
       } catch (Exception exception) {
         exception.printStackTrace();
       }
@@ -844,31 +843,10 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     }
   }
 
-  public static boolean saveToPNG(String filename) {
-    boolean isSuccess = false;
-    validateNotNull(filename, "filename");
-    File file = new File(filename);
-    String fileType = filename.substring(filename.lastIndexOf('.') + 1);
-    if (fileType.equalsIgnoreCase(fileType)) {
-      try {
-        ImageIO.write(onscreenImage, fileType, file);
-        isSuccess = true;
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-    return isSuccess;
-  }
-
   public static JFileChooser launchFileOpenDialogue() throws IOException {
     JFileChooser fileChooser  = new JFileChooser((File) null);
 
-    fileChooser.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        System.out.println("File loading ...");
-      }
-    });
+    fileChooser.addActionListener(e -> System.out.println("File loading ..."));
 
     return fileChooser;
   }
@@ -904,6 +882,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    */
   @Override
   public void actionPerformed(ActionEvent e) {
+
   }
 
   /**

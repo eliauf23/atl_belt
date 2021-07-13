@@ -1,4 +1,4 @@
-package graphics_src;
+package com.company;
 /******************************************************************************
  *  Compilation:  javac StdDraw.java
  *  Execution:    java StdDraw
