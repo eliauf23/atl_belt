@@ -62,6 +62,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   public static final Color NAVY_BLUE = new Color(4, 22, 56);
 
 
+
   // default colors
   private static final Color DEFAULT_PEN_COLOR = BLACK;
   private static final Color DEFAULT_CLEAR_COLOR = WHITE;
