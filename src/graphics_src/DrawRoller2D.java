@@ -1,13 +1,11 @@
-package com.company;
+package graphics_src;
 
-import static com.company.Roller.std_spacer;
-
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import javax.swing.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import javax.swing.JApplet;
 
 public class DrawRoller2D extends JApplet {

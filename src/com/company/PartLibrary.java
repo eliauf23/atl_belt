@@ -14,11 +14,11 @@ public class PartLibrary {
   PartLibrary() {
     lib = new HashMap<>();
 
-    lib.put("washer", new Part(1.0, 0.5, StdDraw.BLACK, "washer"));
-    lib.put("disk", new Part(4.0, 1.0, StdDraw.GRAY, "disk"));
-    lib.put("gasket", new Part(2.0, 1.0, StdDraw.PRINCETON_ORANGE, "gasket"));
-    lib.put("std_spacer", new Part(2.0, 3.5, StdDraw.BOOK_BLUE, "std_spacer"));
-    lib.put("short_spacer", new Part(2.0, 2.0, StdDraw.CYAN, "short_spacer"));
+    lib.put("washer", new Part(1.0, 0.5, Draw.BLACK, "washer"));
+    lib.put("disk", new Part(4.0, 1.0, Draw.GRAY, "disk"));
+    lib.put("gasket", new Part(2.0, 1.0, Draw.PRINCETON_ORANGE, "gasket"));
+    lib.put("std_spacer", new Part(2.0, 3.5, Draw.MEDIUM_BLUE, "std_spacer"));
+    lib.put("short_spacer", new Part(2.0, 2.0, Draw.CYAN, "short_spacer"));
   }
 
 

@@ -65,16 +65,16 @@ public class Part {
     double height = p.getHeight();
     double width = p.getWidth();
     Color color = p.getColor();
-    StdDraw.setPenColor(color);
-    StdDraw.filledRectangle(x_current, Y_CENTER, width / 2.0, height / 2.0);
+    Draw.setPenColor(color);
+    Draw.filledRectangle(x_current, Y_CENTER, width / 2.0, height / 2.0);
   }
 
   public static void drawShaft(double shaftLength, double sumOfWidths) {
     //default thickness = 1 & default color is light grey
 
-    StdDraw.setPenColor(StdDraw.LIGHT_GRAY);
+    Draw.setPenColor(Draw.LIGHT_GRAY);
 
-    StdDraw.filledRectangle(SCALE / 2.0, SCALE / 2.0, shaftLength / 2.0, 0.25);
+    Draw.filledRectangle(SCALE / 2.0, SCALE / 2.0, shaftLength / 2.0, 0.25);
 
 
   }
@@ -119,7 +119,7 @@ public class Part {
   @Override
   public boolean equals(Object obj) throws NullPointerException {
 
-    Part p = new Part(0, 0, StdDraw.BLACK);
+    Part p = new Part(0, 0, Draw.BLACK);
     if (obj != null && obj.getClass() == p.getClass()) {
       Part obj_part = (Part) obj;
       return obj_part.getHeight() == (this.getHeight()) && obj_part.getWidth() == (this.getWidth());

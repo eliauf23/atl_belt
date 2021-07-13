@@ -1,0 +1,117 @@
+<html>
+<head>
+<title>Main.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6897bb;}
+.s3 { color: #808080;}
+.s4 { color: #6a8759;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Main.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.company</span><span class="s0">;</span>
+
+<span class="s0">import static </span><span class="s1">com.company.Part.calcSumOfWidths</span><span class="s0">;</span>
+<span class="s0">import static </span><span class="s1">com.company.Part.drawPartsFromList</span><span class="s0">;</span>
+<span class="s0">import static </span><span class="s1">com.company.Part.drawShaft</span><span class="s0">;</span>
+
+<span class="s0">import </span><span class="s1">java.io.IOException</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.nio.file.Files</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.nio.file.Paths</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.util.ArrayList</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.util.HashMap</span><span class="s0">;</span>
+<span class="s0">import </span><span class="s1">java.util.List</span><span class="s0">;</span>
+
+<span class="s0">public class </span><span class="s1">Main {</span>
+
+
+  <span class="s0">static final int </span><span class="s1">CANVAS_WIDTH = </span><span class="s2">2048</span><span class="s0">;</span>
+  <span class="s0">static final int </span><span class="s1">CANVAS_HEIGHT = </span><span class="s2">2048</span><span class="s0">;</span>
+  <span class="s0">static final double </span><span class="s1">Y_CENTER = </span><span class="s2">0</span><span class="s0">;</span>
+
+
+  <span class="s0">static int </span><span class="s1">SCALE = </span><span class="s2">0</span><span class="s0">;</span>
+
+  <span class="s0">static double </span><span class="s1">shaft_len = </span><span class="s2">0.0</span><span class="s0">;</span>
+
+  <span class="s0">public static void </span><span class="s1">main(String[] args) </span><span class="s0">throws </span><span class="s1">IOException {</span>
+
+    <span class="s3">//TODO: Config. dwg environment</span>
+    <span class="s3">//Initialize canvas size, scale</span>
+    <span class="s1">StdDraw.setCanvasSize(CANVAS_WIDTH</span><span class="s0">, </span><span class="s1">CANVAS_HEIGHT)</span><span class="s0">;</span>
+    <span class="s1">StdDraw.setScale(</span><span class="s2">0</span><span class="s0">, </span><span class="s2">1</span><span class="s1">)</span><span class="s0">; </span><span class="s3">//i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner</span>
+    <span class="s1">StdDraw.enableDoubleBuffering()</span><span class="s0">;</span>
+
+    <span class="s1">String fileName = </span><span class="s4">&quot;C:</span><span class="s0">\\</span><span class="s4">Users</span><span class="s0">\\</span><span class="s4">eliau</span><span class="s0">\\</span><span class="s4">IdeaProjects</span><span class="s0">\\</span><span class="s4">atl_belt</span><span class="s0">\\</span><span class="s4">input</span><span class="s0">\\</span><span class="s4">test1.txt&quot;</span><span class="s0">;</span>
+
+    <span class="s1">List&lt;Part&gt; partList = convertFileToPartList(fileName)</span><span class="s0">;</span>
+
+    <span class="s3">//create bill of materials</span>
+    <span class="s1">HashMap&lt;String</span><span class="s0">, </span><span class="s1">Integer&gt; billOfMaterials = </span><span class="s0">new </span><span class="s1">HashMap&lt;String</span><span class="s0">, </span><span class="s1">Integer&gt;()</span><span class="s0">;</span>
+    <span class="s0">for </span><span class="s1">(Part p : partList) {</span>
+
+
+      <span class="s0">if </span><span class="s1">(billOfMaterials.containsKey(p.getName())) {</span>
+        <span class="s1">billOfMaterials.put(p.getName()</span><span class="s0">, </span><span class="s1">billOfMaterials.get(p.getName()) + </span><span class="s2">1</span><span class="s1">)</span><span class="s0">;</span>
+      <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+        <span class="s1">billOfMaterials.put(p.getName()</span><span class="s0">, </span><span class="s2">1</span><span class="s1">)</span><span class="s0">;</span>
+      <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">StdDraw.setPenRadius(</span><span class="s2">0.005</span><span class="s1">)</span><span class="s0">;</span>
+    <span class="s3">//draw parts from list &amp; simultaneously sum widths</span>
+    <span class="s0">double </span><span class="s1">sumOfWidths = calcSumOfWidths(partList</span><span class="s0">, </span><span class="s1">Y_CENTER)</span><span class="s0">;</span>
+
+    <span class="s3">//TODO: draw shaft</span>
+    <span class="s1">drawShaft(shaft_len</span><span class="s0">, </span><span class="s1">sumOfWidths)</span><span class="s0">;</span>
+
+
+    <span class="s1">drawPartsFromList(partList</span><span class="s0">, </span><span class="s1">Y_CENTER</span><span class="s0">, </span><span class="s1">sumOfWidths)</span><span class="s0">;</span>
+    <span class="s1">StdDraw.show()</span><span class="s0">;</span>
+    <span class="s1">System.out.println(</span><span class="s4">&quot;Sum of all widths: &quot; </span><span class="s1">+ sumOfWidths)</span><span class="s0">;</span>
+
+    <span class="s1">System.out.println(</span><span class="s4">&quot;Bill of Materials: &quot; </span><span class="s1">+ billOfMaterials.toString())</span><span class="s0">;</span>
+
+  <span class="s1">}</span>
+
+
+  <span class="s0">public static </span><span class="s1">List&lt;Part&gt; convertFileToPartList(String fileName) </span><span class="s0">throws </span><span class="s1">IOException {</span>
+    <span class="s1">PartLibrary pl = </span><span class="s0">new </span><span class="s1">PartLibrary()</span><span class="s0">;</span>
+
+    <span class="s1">HashMap&lt;String</span><span class="s0">, </span><span class="s1">Part&gt; library = PartLibrary.lib</span><span class="s0">;</span>
+
+    <span class="s1">List&lt;String&gt; lines = Files.readAllLines(Paths.get(fileName))</span><span class="s0">;</span>
+    <span class="s1">List&lt;Part&gt; partList = </span><span class="s0">new </span><span class="s1">ArrayList&lt;&gt;()</span><span class="s0">;</span>
+
+    <span class="s0">int </span><span class="s1">index = </span><span class="s2">0</span><span class="s0">;</span>
+    <span class="s0">for </span><span class="s1">(String str : lines) {</span>
+      <span class="s0">if </span><span class="s1">(index == </span><span class="s2">0 </span><span class="s1">&amp;&amp; str != </span><span class="s0">null</span><span class="s1">) {</span>
+        <span class="s1">setShaftLength(Double.parseDouble(str))</span><span class="s0">;</span>
+      <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+        <span class="s3">//trim any whitespace &amp; add Part obj. to array list</span>
+        <span class="s1">Part p = </span><span class="s0">new </span><span class="s1">Part(str.trim()</span><span class="s0">, </span><span class="s1">library)</span><span class="s0">;</span>
+
+        <span class="s1">partList.add(p)</span><span class="s0">;</span>
+      <span class="s1">}</span>
+
+
+      <span class="s1">index++</span><span class="s0">;</span>
+    <span class="s1">}</span>
+    <span class="s0">return </span><span class="s1">partList</span><span class="s0">;</span>
+  <span class="s1">}</span>
+
+  <span class="s0">public static void </span><span class="s1">setShaftLength(Double len) {</span>
+    <span class="s0">if </span><span class="s1">(len != </span><span class="s0">null </span><span class="s1">&amp;&amp; len &gt; </span><span class="s2">0</span><span class="s1">) {</span>
+      <span class="s1">shaft_len = len</span><span class="s0">;</span>
+    <span class="s1">}</span>
+  <span class="s1">}</span>
+<span class="s1">}</span></pre>
+</body>
+</html>

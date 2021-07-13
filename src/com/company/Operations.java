@@ -40,15 +40,15 @@ public class Operations {
 
   public static void setup(int CANVAS_WIDTH, int CANVAS_HEIGHT, int SCALE) {
     //Initialize canvas size, scale
-    StdDraw.setCanvasSize(CANVAS_WIDTH, CANVAS_HEIGHT);
-    StdDraw.setScale(0, SCALE); //i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner
-    StdDraw.setPenRadius(0.005);
-    StdDraw.enableDoubleBuffering();
+    Draw.setCanvasSize(CANVAS_WIDTH, CANVAS_HEIGHT);
+    Draw.setScale(0, SCALE); //i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner
+    Draw.setPenRadius(0.005);
+    Draw.enableDoubleBuffering();
 
   }
 
   public static void displayResults(double sumOfWidths, HashMap<String, Integer> billOfMaterials) {
-    StdDraw.show();
+    Draw.show();
     System.out.println("Sum of all widths: " + sumOfWidths);
     System.out.println("Bill of Materials: " + billOfMaterials.toString());
 
