@@ -1,4 +1,4 @@
-package com.company;
+package DrawingApp;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -34,19 +34,32 @@ public class DrawingApp extends JFrame {
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
     // Generated using JFormDesigner Evaluation license - Elizabeth A
+    scrollPane1 = new JScrollPane();
+    editorPane1 = new JEditorPane();
 
     //======== this ========
     Container contentPane = getContentPane();
+
+    //======== scrollPane1 ========
+    {
+      scrollPane1.setViewportView(editorPane1);
+    }
 
     GroupLayout contentPaneLayout = new GroupLayout(contentPane);
     contentPane.setLayout(contentPaneLayout);
     contentPaneLayout.setHorizontalGroup(
       contentPaneLayout.createParallelGroup()
-        .addGap(0, 400, Short.MAX_VALUE)
+        .addGroup(contentPaneLayout.createSequentialGroup()
+          .addGap(28, 28, 28)
+          .addComponent(scrollPane1, GroupLayout.PREFERRED_SIZE, 279, GroupLayout.PREFERRED_SIZE)
+          .addContainerGap(586, Short.MAX_VALUE))
     );
     contentPaneLayout.setVerticalGroup(
       contentPaneLayout.createParallelGroup()
-        .addGap(0, 300, Short.MAX_VALUE)
+        .addGroup(contentPaneLayout.createSequentialGroup()
+          .addGap(30, 30, 30)
+          .addComponent(scrollPane1, GroupLayout.PREFERRED_SIZE, 108, GroupLayout.PREFERRED_SIZE)
+          .addContainerGap(360, Short.MAX_VALUE))
     );
     pack();
     setLocationRelativeTo(getOwner());
@@ -55,5 +68,7 @@ public class DrawingApp extends JFrame {
 
   // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
   // Generated using JFormDesigner Evaluation license - Elizabeth A
+  private JScrollPane scrollPane1;
+  private JEditorPane editorPane1;
   // JFormDesigner - End of variables declaration  //GEN-END:variables
 }

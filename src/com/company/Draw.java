@@ -1,9 +1,9 @@
 package com.company;
 
 import static com.company.Main.shaft_len;
-import static com.company.Operations.convertFileToPartList;
-import static com.company.Operations.displayResults;
 import static com.company.Part.calcSumOfWidths;
+import static com.company.Part.convertFileToPartList;
+import static com.company.Part.displayResults;
 import static com.company.Part.drawPartsFromList;
 import static com.company.Part.drawShaft;
 
@@ -11,22 +11,20 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLaf;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -38,17 +36,28 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
+import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
 
+/**
+ * This class draws the roller spec & processes input and output from keyboard and mouse.
+ * Based on StdDraw class from princeton intro CS course website & standard library.
+ */
 public class Draw implements ActionListener, MouseListener, MouseMotionListener, KeyListener {
 
   //List of colors available for 2D Graphics
@@ -71,7 +80,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   public static final Color PRINCETON_ORANGE = new Color(245, 128, 37);
   public static final Color MEDIUM_GRAY = new Color(88, 88, 88);
   public static final Color NAVY_BLUE = new Color(4, 22, 56);
-
 
 
   // default colors
@@ -99,12 +107,13 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
   //modifiable properties - pen color, canvas width & height, pen radius, current buffer status
-  //currently not using next two lines TODO: remove if unnecessary for rendering
+  //currently not using next two lines
   private static final Object mouseLock = new Object();
   private static final Object keyLock = new Object();
-  //TODO: revisit this decision - might be able to eliminate this & Draw constructor
+
   //singleton for callbacks: avoids generation of extra .class files
   private static final Draw std = new Draw();
+  protected static String titleString = "Atlantic Belt - Roller Spec. Application";
   private static Color penColor;
   private static double penRadius;
   private static int width = DEFAULT_SIZE;
@@ -123,6 +132,9 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   private static Graphics2D onscreen;
   // the frame for drawing to the screen
   private static JFrame frame;
+  //menuItems
+  private static JTextArea output;
+  private static JScrollPane scrollPane;
   // mouse state
   private static boolean isMousePressed = false;
   private static double mouseX = 0;
@@ -131,8 +143,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   private static LinkedList<Character> keysTyped;
   // set of key codes currently pressed down
   private static TreeSet<Integer> keysDown;
-
-  protected static String titleString = "Atlantic Belt - Roller Spec. Application";
+  private static RuntimeException FileSystemAlreadyExistsException;
 
   // static initializer
   static {
@@ -144,7 +155,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
   /**
-   * Initialization functions
+   * Initialization functions.
    */
 
   public static void setCanvasSize(int canvasWidth, int canvasHeight) {
@@ -159,14 +170,13 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     init();
   }
 
-
   // init
-  private static void init(){
+  private static void init() {
 
     try {
       UIManager.setLookAndFeel(new FlatDarculaLaf());
-    } catch(Exception e) {
-      System.err.println( "Failed to initialize LaF" );
+    } catch (Exception e) {
+      System.err.println("Failed to initialize LaF");
     }
 
     FlatLaf.updateUI();
@@ -192,8 +202,8 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     clear();
 
     // initialize keystroke buffers
-    keysTyped = new LinkedList<Character>();
-    keysDown = new TreeSet<Integer>();
+    keysTyped = new LinkedList<>();
+    keysDown = new TreeSet<>();
 
     // add antialiasing
     RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING,
@@ -209,79 +219,154 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     draw.addMouseMotionListener(std);
 
     frame.setContentPane(draw);
+
+
     frame.addKeyListener(std);    // JLabel cannot get keyboard focus
     frame.setFocusTraversalKeysEnabled(false);  // allow VK_TAB with isKeyPressed()
-    frame.setResizable(false);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);            // closes all windows
+    frame.setResizable(true);
+    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+    //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);            // closes all windows
     // frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);      // closes only current window
     frame.setTitle(titleString);
+
+    //setup close operations when you create menu bar
+
+
     frame.setJMenuBar(createMenuBar());
     frame.pack();
     frame.requestFocusInWindow();
-
     frame.setVisible(true);
   }
 
-  // create the menu bar (changed to private)
+  public static void setup(int canvasWidth, int canvasHeight, int scale) {
+    //Initialize canvas size, scale
+    setCanvasSize(canvasWidth, canvasHeight);
+    setScale(0, scale); //i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner
+    setPenRadius(0.005);
+    enableDoubleBuffering();
+  }
+
+
+  // create the menu bar (changed to protected)
   protected static JMenuBar createMenuBar() {
-    JMenuBar menuBar = new JMenuBar();
-    //add File menu
+    JMenuBar menuBar;
+    JMenu fileMenu, editMenu, helpMenu, submenu;
+    JMenuItem menuItem_file_open, menuItem_file_save, menuItem_file_exit;
+
+    menuBar = new JMenuBar();
+
+    frame.setJMenuBar(menuBar);
+
+    final CloseAction closeAction = new CloseAction(frame);
+
+    JPanel panel = new JPanel();
+    panel.add(new JButton(closeAction));
 
 
-    JMenu fileMenu = new JMenu("File");
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        closeAction.confirmClosing();
 
+      }
+    });
+
+    // also use the same Action in your ctrl-q key bindings
+    int condition = JComponent.WHEN_IN_FOCUSED_WINDOW;
+    InputMap inputMap = panel.getInputMap(condition);
+    ActionMap actionMap = panel.getActionMap();
+    KeyStroke ctrlQKey = KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK);
+    inputMap.put(ctrlQKey, ctrlQKey.toString());
+    actionMap.put(ctrlQKey.toString(), closeAction);
+
+    frame.add(panel);
+
+
+//start by creating file menu and Mnemonic for keybinding
+    fileMenu = new JMenu("File");
+    fileMenu.setMnemonic(KeyEvent.VK_F);
     menuBar.add(fileMenu);
 
+    //first file menu item (Save)
+    menuItem_file_save = new JMenuItem(" Save ...   ", KeyEvent.VK_S);
+    menuItem_file_save.addActionListener(e1 -> {
+      JFileChooser fileChooser = null;
 
-    //Add save functionality
-    JMenuItem fileMenuItem1 = new JMenuItem(" Save...   ");
-    fileMenuItem1.addActionListener(e1 -> {
+      try {
+        fileChooser = launchSaveFileDialogue();
+      } catch (RuntimeException | IOException runtimeException) {
+        //check if runtime exception is FilesystemAlreadyExists?
+        //also check if other error & restart file dialogue
+      }
 
-      FileDialog chooser = new FileDialog(Draw.frame, "Use a .png or .jpg extension", FileDialog.SAVE);
-      chooser.setVisible(true);
-      String filename = chooser.getFile();
-      if (filename != null) {
-        Draw.save(chooser.getDirectory() + File.separator + chooser.getFile());
+      assert fileChooser != null;
+      int status = fileChooser.showSaveDialog(null);
+      fileChooser.setVisible(true);
+
+      if (status == JFileChooser.APPROVE_OPTION) {
+        File fileToSave = fileChooser.getSelectedFile();
+        String fileName = fileToSave.getAbsolutePath();
+        if (fileName != null) {
+          Draw.save(fileName);
+        } else {
+          System.out.println("File name is invalid. Try again");
+
+          //todo: prompt again
+        }
+      } else if (status == JFileChooser.CANCEL_OPTION) {
+        System.out.println("User cancelled dialogue");
+      } else {
+        //throw new FileSystemAlreadyExistsException();
       }
 
     });
-    // Java 10+: replace getMenuShortcutKeyMask() with getMenuShortcutKeyMask()
-    fileMenuItem1.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
-        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-    fileMenu.add(fileMenuItem1);
+
+    menuItem_file_save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+    fileMenu.add(menuItem_file_save);
 
 
-    JMenuItem fileMenuItem2 = new JMenuItem(" Open text file   ");
-    fileMenuItem2.addActionListener(e2 -> {
+    //second file menu item (Open)
+    menuItem_file_open = new JMenuItem(" Open text file   ", KeyEvent.VK_O);
+    menuItem_file_open.addActionListener(e2 -> {
       try {
         openFileAndDrawContents();
       } catch (IOException ioException) {
         ioException.printStackTrace();
       }
     });
-    // Java 10+: replace getMenuShortcutKeyMask() with getMenuShortcutKeyMask()
-    fileMenuItem2.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
-        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-    fileMenu.add(fileMenuItem2);
+    menuItem_file_open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+    fileMenu.add(menuItem_file_open);
+
+    //third file menu item (Exit)
+
+    menuItem_file_exit = new JMenuItem(" Exit   ", KeyEvent.VK_Q);
+
+    menuItem_file_exit.setAction(closeAction);
 
 
-
-    //Add exit functionality
-    JMenuItem fileMenuItem3 = new JMenuItem(" Exit      ");
-    fileMenuItem1.addActionListener(e3 -> {
+    menuItem_file_exit.addActionListener(e3 -> {
       try {
-        //frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+        //closeAction.confirmClosing();
       } catch (Exception exception) {
         exception.printStackTrace();
       }
     });
-    fileMenuItem3.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
-        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+    menuItem_file_exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
+    fileMenu.add(menuItem_file_exit);
+    //might want to replace CTRL_DOWN_MASK with Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) to generalize for mac or linux
 
-    fileMenu.add(fileMenuItem3);
+
+    editMenu = new JMenu("Edit");
+
+    helpMenu = new JMenu("Help");
+
+
+    menuBar.add(fileMenu);
+
 
     //Add a new menu
-    JMenu editMenu = new JMenu("Help");
+    //JMenu editMenu = new JMenu("Help");
 
 
     menuBar.add(editMenu);
@@ -319,21 +404,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     }
   }
 
-
-  /**
-   * Sets the <em>x</em>-scale to be the default (between 0.0 and 1.0).
-   */
-  public static void setXscale() {
-    setXscale(DEFAULT_XMIN, DEFAULT_XMAX);
-  }
-
-  /**
-   * Sets the <em>y</em>-scale to be the default (between 0.0 and 1.0).
-   */
-  public static void setYscale() {
-    setYscale(DEFAULT_YMIN, DEFAULT_YMAX);
-  }
-
   /**
    * Sets the <em>x</em>-scale and <em>y</em>-scale to be the default
    * (between 0.0 and 1.0).
@@ -341,48 +411,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   public static void setScale() {
     setXscale();
     setYscale();
-  }
-
-  /**
-   * Sets the <em>x</em>-scale to the specified range.
-   *
-   * @param min the minimum value of the <em>x</em>-scale
-   * @param max the maximum value of the <em>x</em>-scale
-   * @throws IllegalArgumentException if {@code (max == min)}
-   * @throws IllegalArgumentException if either {@code min} or {@code max} is either NaN or infinite
-   */
-  public static void setXscale(double min, double max) {
-    validate(min, "min");
-    validate(max, "max");
-    double size = max - min;
-    if (size == 0.0) {
-      throw new IllegalArgumentException("the min and max are the same");
-    }
-    synchronized (mouseLock) {
-      xmin = min - BORDER * size;
-      xmax = max + BORDER * size;
-    }
-  }
-
-  /**
-   * Sets the <em>y</em>-scale to the specified range.
-   *
-   * @param min the minimum value of the <em>y</em>-scale
-   * @param max the maximum value of the <em>y</em>-scale
-   * @throws IllegalArgumentException if {@code (max == min)}
-   * @throws IllegalArgumentException if either {@code min} or {@code max} is either NaN or infinite
-   */
-  public static void setYscale(double min, double max) {
-    validate(min, "min");
-    validate(max, "max");
-    double size = max - min;
-    if (size == 0.0) {
-      throw new IllegalArgumentException("the min and max are the same");
-    }
-    synchronized (mouseLock) {
-      ymin = min - BORDER * size;
-      ymax = max + BORDER * size;
-    }
   }
 
   /**
@@ -407,6 +435,65 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
       ymax = max + BORDER * size;
     }
   }
+
+
+  /**
+   * Sets the <em>x</em>-scale to be the default (between 0.0 and 1.0).
+   */
+  public static void setXscale() {
+    setXscale(DEFAULT_XMIN, DEFAULT_XMAX);
+  }
+
+
+  /**
+   * Sets the <em>x</em>-scale to the specified range.
+   *
+   * @param min the minimum value of the <em>x</em>-scale
+   * @param max the maximum value of the <em>x</em>-scale
+   * @throws IllegalArgumentException if {@code (max == min)}
+   * @throws IllegalArgumentException if either {@code min} or {@code max} is either NaN or infinite
+   */
+  public static void setXscale(double min, double max) {
+    validate(min, "min");
+    validate(max, "max");
+    double size = max - min;
+    if (size == 0.0) {
+      throw new IllegalArgumentException("the min and max are the same");
+    }
+    synchronized (mouseLock) {
+      xmin = min - BORDER * size;
+      xmax = max + BORDER * size;
+    }
+  }
+
+  /**
+   * Sets the <em>y</em>-scale to be the default (between 0.0 and 1.0).
+   */
+  public static void setYscale() {
+    setYscale(DEFAULT_YMIN, DEFAULT_YMAX);
+  }
+
+  /**
+   * Sets the <em>y</em>-scale to the specified range.
+   *
+   * @param min the minimum value of the <em>y</em>-scale
+   * @param max the maximum value of the <em>y</em>-scale
+   * @throws IllegalArgumentException if {@code (max == min)}
+   * @throws IllegalArgumentException if either {@code min} or {@code max} is either NaN or infinite
+   */
+  public static void setYscale(double min, double max) {
+    validate(min, "min");
+    validate(max, "max");
+    double size = max - min;
+    if (size == 0.0) {
+      throw new IllegalArgumentException("the min and max are the same");
+    }
+    synchronized (mouseLock) {
+      ymin = min - BORDER * size;
+      ymax = max + BORDER * size;
+    }
+  }
+
 
   // helper functions that scale from user coordinates to screen coordinates and back
   private static double scaleX(double x) {
@@ -471,7 +558,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    * The pen radius is not affected by coordinate scaling.
    *
    * @param radius the radius of the pen
-   * @throws IllegalArgumentException if {@code radius} is negative, NaN, or infinite
+   * @throws IllegalArgumentException if {@code radius} is negative,NaN,or inf.
    */
   public static void setPenRadius(double radius) {
     validate(radius, "pen radius");
@@ -479,7 +566,8 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     penRadius = radius;
     float scaledPenRadius = (float) (radius * DEFAULT_SIZE);
-    BasicStroke stroke = new BasicStroke(scaledPenRadius, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    BasicStroke stroke = new BasicStroke(scaledPenRadius, BasicStroke.CAP_ROUND,
+        BasicStroke.JOIN_ROUND);
     // BasicStroke stroke = new BasicStroke(scaledPenRadius);
     offscreen.setStroke(stroke);
   }
@@ -505,13 +593,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
   /**
    * Sets the pen color to the specified color.
-   * <p>
    * The predefined pen colors are
-   * {@code Draw.BLACK}, {@code Draw.BLUE}, {@code Draw.CYAN},
-   * {@code Draw.DARK_GRAY}, {@code Draw.GRAY}, {@code Draw.GREEN},
-   * {@code Draw.LIGHT_GRAY}, {@code Draw.MAGENTA}, {@code Draw.ORANGE},
-   * {@code Draw.PINK}, {@code Draw.RED}, {@code Draw.WHITE}, and
-   * {@code Draw.YELLOW}.
    *
    * @param color the color to make the pen
    * @throws IllegalArgumentException if {@code color} is {@code null}
@@ -591,10 +673,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     }
   }
 
-  /***************************************************************************
-   *  Drawing text.
-   ***************************************************************************/
-
   /**
    * Writes the given text string in the current font, centered at (<em>x</em>, <em>y</em>).
    *
@@ -628,7 +706,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    * @param text    the text to write
    * @param degrees is the number of degrees to rotate counterclockwise
    * @throws IllegalArgumentException if {@code text} is {@code null}
-   * @throws IllegalArgumentException if {@code x}, {@code y}, or {@code degrees} is either NaN or infinite
+   * @throws IllegalArgumentException if  x,  y, or degrees is either NaN or infinite
    */
   public static void text(double x, double y, String text, double degrees) {
     validate(x, "x");
@@ -692,15 +770,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
 
-  public static void pause(int t) {
-    validateNonnegative(t, "t");
-    try {
-      Thread.sleep(t);
-    } catch (InterruptedException e) {
-      System.out.println("Error sleeping");
-    }
-  }
-
   /**
    * Enables double buffering. All subsequent calls to
    * drawing methods such as {@code line()}, {@code circle()},
@@ -712,35 +781,16 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
   /**
-   * Disables double buffering. All subsequent calls to
-   * drawing methods such as {@code line()}, {@code circle()},
-   * and {@code square()} will be displayed on screen when called.
-   * This is the default.
+   * Disables double buffering.
+   * All subsequent calls to drawing methods such as {@code line()},
+   * {@code circle()}, and {@code square()} will be displayed on
+   * screen when called. This is the default.
    */
   public static void disableDoubleBuffering() {
     defer = false;
   }
 
-
-  /**********************
-   * Draw basic geometry: rectangles, lines, filled-rectangle (will add more later
-   */
-
-  //TODO: determine if I need to add any additional functionality (like drawing geometric objects, text?)
-  private static void pixel(double x, double y) {
-    validate(x, "x");
-    validate(y, "y");
-    offscreen.fillRect((int) Math.round(scaleX(x)), (int) Math.round(scaleY(y)), 1, 1);
-  }
-
-  public static void line(double x0, double y0, double x1, double y1) {
-    validate(x0, "x0");
-    validate(y0, "y0");
-    validate(x1, "x1");
-    validate(y1, "y1");
-    offscreen.draw(new Line2D.Double(scaleX(x0), scaleY(y0), scaleX(x1), scaleY(y1)));
-    draw();
-  }
+  /* Draw basic geometry: rectangles, lines, filled-rectangle (will add more later) */
 
   /**
    * Draws one pixel at (<em>x</em>, <em>y</em>).
@@ -751,7 +801,29 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    * @param y the <em>y</em>-coordinate of the pixel
    * @throws IllegalArgumentException if {@code x} or {@code y} is either NaN or infinite
    */
+  private static void pixel(double x, double y) {
+    validate(x, "x");
+    validate(y, "y");
+    offscreen.fillRect((int) Math.round(scaleX(x)), (int) Math.round(scaleY(y)), 1, 1);
+  }
 
+  /**
+   * Draws a line.
+   *
+   * @param x0 initial x-value.
+   * @param y0 initial y-value.
+   * @param x1 final x-value.
+   * @param y1 final y-value.
+   */
+
+  public static void line(double x0, double y0, double x1, double y1) {
+    validate(x0, "x0");
+    validate(y0, "y0");
+    validate(x1, "x1");
+    validate(y1, "y1");
+    offscreen.draw(new Line2D.Double(scaleX(x0), scaleY(y0), scaleX(x1), scaleY(y1)));
+    draw();
+  }
 
   /**
    * Draws a filled rectangle of the specified size, centered at (<em>x</em>, <em>y</em>).
@@ -814,9 +886,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
 
-  /***************************************************************************
-   *  Save drawing to a file.
-   ***************************************************************************/
+  /* Save drawing to a file */
 
   /**
    * Saves the drawing to using the specified filename.
@@ -843,29 +913,49 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     }
   }
 
-  public static JFileChooser launchFileOpenDialogue() throws IOException {
-    JFileChooser fileChooser  = new JFileChooser((File) null);
-
+  /**
+   * Method launches window with file open dialogue.
+   *
+   * @return JFileChooser object created to open file specified by user.
+   */
+  public static JFileChooser launchFileOpenDialogue() {
+    JFileChooser fileChooser = new JFileChooser((File) null);
+    //fileChooser.addActionListener(e -> System.out.println());
     fileChooser.addActionListener(e -> System.out.println("File loading ..."));
 
     return fileChooser;
   }
 
+  public static JFileChooser launchSaveFileDialogue() throws IOException {
+    JFileChooser fileChooser = new JFileChooser((File) null);
+    fileChooser.setDialogTitle("Save as a .png file");
+    return fileChooser;
+
+  }
+
+  /**
+   * method opens file using JFileChooser framework, and if able to successfully open
+   * file & parse data -> converts to list & draws components.
+   */
   public static void openFileAndDrawContents() throws IOException {
     File selectedFile;
 
-    JFileChooser fileChooser  = launchFileOpenDialogue();
+    JFileChooser fileChooser = launchFileOpenDialogue();
     int status = fileChooser.showOpenDialog(null);
 
-    if(status == JFileChooser.APPROVE_OPTION) {
+    if (status == JFileChooser.APPROVE_OPTION) {
       selectedFile = fileChooser.getSelectedFile();
       List<Part> partList = convertFileToPartList(selectedFile);
       HashMap<String, Integer> billOfMaterials = new HashMap<>();
       PartLibrary.createBillOfMaterials(billOfMaterials, partList);
       double sumOfWidths = calcSumOfWidths(partList);
-      drawShaft(shaft_len, sumOfWidths);
+      drawShaft(shaft_len);
       drawPartsFromList(partList, sumOfWidths);
       displayResults(sumOfWidths, billOfMaterials);
+    } else if (status == JFileChooser.CANCEL_OPTION) {
+      System.out.println("User cancelled open file dialogue.");
+      //do nothing
+      //throw new FileNotFoundException();
     } else {
       throw new FileNotFoundException();
     }
@@ -910,9 +1000,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
 
-  /***************************************************************************
-   *  Keyboard interactions.
-   ***************************************************************************/
+  /* Keyboard interactions */
 
   /**
    * This method cannot be called directly.
@@ -985,41 +1073,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   public void keyReleased(KeyEvent e) {
     synchronized (keyLock) {
       keysDown.remove(e.getKeyCode());
-    }
-  }
-
-
-  /***************************************************************************
-   *  For improved resolution on Mac Retina displays.
-   ***************************************************************************/
-
-  private static class RetinaImageIcon extends ImageIcon {
-
-    public RetinaImageIcon(Image image) {
-      super(image);
-    }
-
-    public int getIconWidth() {
-      return super.getIconWidth() / 2;
-    }
-
-    /**
-     * Gets the height of the icon.
-     *
-     * @return the height in pixels of this icon
-     */
-    public int getIconHeight() {
-      return super.getIconHeight() / 2;
-    }
-
-    public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-      Graphics2D g2 = (Graphics2D) g.create();
-      g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-      g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.scale(0.5, 0.5);
-      super.paintIcon(c, g2, x * 2, y * 2);
-      g2.dispose();
     }
   }
 }

@@ -1,4 +1,4 @@
-package com.company;
+package graphics_src;
 
 
 import java.awt.Color;

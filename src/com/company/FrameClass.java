@@ -47,7 +47,6 @@ public class FrameClass extends JFrame {
 
   public static void main(String[] args) {
     FrameClass frameClass = new FrameClass();
-
   }
 
 }
