@@ -1,0 +1,5 @@
+"washer"=(1.0, 0.5, Draw.BLACK)
+"disk"=(4.0, 1.0, Draw.GRAY)
+"gasket"=(2.0, 1.0, Draw.PRINCETON_ORANGE)
+"std_spacer"=((2.0, 3.5, Draw.MEDIUM_BLUE)
+"short_spacer"=(2.0, 2.0, Draw.CYAN)
