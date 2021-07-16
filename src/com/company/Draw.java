@@ -14,7 +14,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -36,6 +38,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
@@ -47,12 +50,12 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
-
 
 /**
  * This class draws the roller spec & processes input and output from keyboard and mouse.
@@ -136,9 +139,9 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   private static JTextArea output;
   private static JScrollPane scrollPane;
   // mouse state
-  private static boolean isMousePressed = false;
-  private static double mouseX = 0;
-  private static double mouseY = 0;
+  private static final boolean isMousePressed = false;
+  private static final double mouseX = 0;
+  private static final double mouseY = 0;
   // queue of typed key characters
   private static LinkedList<Character> keysTyped;
   // set of key codes currently pressed down
@@ -220,12 +223,10 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     frame.setContentPane(draw);
 
-
     frame.addKeyListener(std);    // JLabel cannot get keyboard focus
     frame.setFocusTraversalKeysEnabled(false);  // allow VK_TAB with isKeyPressed()
     frame.setResizable(true);
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
     //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);            // closes all windows
     // frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);      // closes only current window
     frame.setTitle(titleString);
@@ -239,12 +240,22 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     frame.setVisible(true);
   }
 
+  /**
+   * Todo: insert javadoc comment.
+   *
+   * @param canvasWidth
+   * @param canvasHeight
+   * @param scale
+   */
   public static void setup(int canvasWidth, int canvasHeight, int scale) {
     //Initialize canvas size, scale
+    enableDoubleBuffering();
+    Image img = Toolkit.getDefaultToolkit().getImage(JFrame.class.getResource("C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\icons8-drawing-24.png"));
+    frame.setIconImage(img);
     setCanvasSize(canvasWidth, canvasHeight);
     setScale(0, scale); //i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner
     setPenRadius(0.005);
-    enableDoubleBuffering();
+
   }
 
 
@@ -252,7 +263,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   protected static JMenuBar createMenuBar() {
     JMenuBar menuBar;
     JMenu fileMenu, editMenu, helpMenu, submenu;
-    JMenuItem menuItem_file_open, menuItem_file_save, menuItem_file_exit;
+    JMenuItem menuItemFileOpen, menuItemFileSave, menuItemFileExit;
 
     menuBar = new JMenuBar();
 
@@ -289,8 +300,8 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     menuBar.add(fileMenu);
 
     //first file menu item (Save)
-    menuItem_file_save = new JMenuItem(" Save ...   ", KeyEvent.VK_S);
-    menuItem_file_save.addActionListener(e1 -> {
+    menuItemFileSave = new JMenuItem(" Save ...   ", KeyEvent.VK_S);
+    menuItemFileSave.addActionListener(e1 -> {
       JFileChooser fileChooser = null;
 
       try {
@@ -307,13 +318,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
       if (status == JFileChooser.APPROVE_OPTION) {
         File fileToSave = fileChooser.getSelectedFile();
         String fileName = fileToSave.getAbsolutePath();
-        if (fileName != null) {
-          Draw.save(fileName);
-        } else {
-          System.out.println("File name is invalid. Try again");
-
-          //todo: prompt again
-        }
+        Draw.save(fileName);
       } else if (status == JFileChooser.CANCEL_OPTION) {
         System.out.println("User cancelled dialogue");
       } else {
@@ -322,38 +327,38 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     });
 
-    menuItem_file_save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-    fileMenu.add(menuItem_file_save);
+    menuItemFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+    fileMenu.add(menuItemFileSave);
 
 
     //second file menu item (Open)
-    menuItem_file_open = new JMenuItem(" Open text file   ", KeyEvent.VK_O);
-    menuItem_file_open.addActionListener(e2 -> {
+    menuItemFileOpen = new JMenuItem(" Open text file   ", KeyEvent.VK_O);
+    menuItemFileOpen.addActionListener(e2 -> {
       try {
         openFileAndDrawContents();
       } catch (IOException ioException) {
         ioException.printStackTrace();
       }
     });
-    menuItem_file_open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
-    fileMenu.add(menuItem_file_open);
+    menuItemFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+    fileMenu.add(menuItemFileOpen);
 
     //third file menu item (Exit)
 
-    menuItem_file_exit = new JMenuItem(" Exit   ", KeyEvent.VK_Q);
+    menuItemFileExit = new JMenuItem(" Exit      ", KeyEvent.VK_Q);
 
-    menuItem_file_exit.setAction(closeAction);
+    menuItemFileExit.setAction(closeAction);
 
 
-    menuItem_file_exit.addActionListener(e3 -> {
+    menuItemFileExit.addActionListener(e3 -> {
       try {
         //closeAction.confirmClosing();
       } catch (Exception exception) {
         exception.printStackTrace();
       }
     });
-    menuItem_file_exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
-    fileMenu.add(menuItem_file_exit);
+    menuItemFileExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
+    fileMenu.add(menuItemFileExit);
     //might want to replace CTRL_DOWN_MASK with Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) to generalize for mac or linux
 
 
@@ -540,15 +545,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     offscreen.fillRect(0, 0, width, height);
     offscreen.setColor(penColor);
     draw();
-  }
-
-  /**
-   * Returns the current pen radius.
-   *
-   * @return the current value of the pen radius
-   */
-  public static double getPenRadius() {
-    return penRadius;
   }
 
   /**
@@ -926,6 +922,12 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     return fileChooser;
   }
 
+  /**
+   * Todo: insert javadoc comment.
+   *
+   * @return
+   * @throws IOException
+   */
   public static JFileChooser launchSaveFileDialogue() throws IOException {
     JFileChooser fileChooser = new JFileChooser((File) null);
     fileChooser.setDialogTitle("Save as a .png file");
@@ -966,9 +968,10 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     System.out.println("draw class test");
   }
 
-
   /**
-   * This method cannot be called directly.
+   * Invoked when an action occurs.
+   *
+   * @param e
    */
   @Override
   public void actionPerformed(ActionEvent e) {
@@ -976,103 +979,154 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
   /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mouseClicked(MouseEvent e) {
-    // this body is intentionally left empty
-  }
-
-  /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mouseEntered(MouseEvent e) {
-    // this body is intentionally left empty
-  }
-
-  /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mouseExited(MouseEvent e) {
-    // this body is intentionally left empty
-  }
-
-
-  /* Keyboard interactions */
-
-  /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mousePressed(MouseEvent e) {
-    synchronized (mouseLock) {
-      mouseX = Draw.userX(e.getX());
-      mouseY = Draw.userY(e.getY());
-      isMousePressed = true;
-    }
-  }
-
-  /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mouseReleased(MouseEvent e) {
-    synchronized (mouseLock) {
-      isMousePressed = false;
-    }
-  }
-
-  /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mouseDragged(MouseEvent e) {
-    synchronized (mouseLock) {
-      mouseX = Draw.userX(e.getX());
-      mouseY = Draw.userY(e.getY());
-    }
-  }
-
-  /**
-   * This method cannot be called directly.
-   */
-  @Override
-  public void mouseMoved(MouseEvent e) {
-    synchronized (mouseLock) {
-      mouseX = Draw.userX(e.getX());
-      mouseY = Draw.userY(e.getY());
-    }
-  }
-
-  /**
-   * This method cannot be called directly.
+   * Invoked when a key has been typed.
+   * See the class description for {@link KeyEvent} for a definition of
+   * a key typed event.
+   *
+   * @param e
    */
   @Override
   public void keyTyped(KeyEvent e) {
-    synchronized (keyLock) {
-      keysTyped.addFirst(e.getKeyChar());
-    }
+
   }
 
   /**
-   * This method cannot be called directly.
+   * Invoked when a key has been pressed.
+   * See the class description for {@link KeyEvent} for a definition of
+   * a key pressed event.
+   *
+   * @param e
    */
   @Override
   public void keyPressed(KeyEvent e) {
-    synchronized (keyLock) {
-      keysDown.add(e.getKeyCode());
-    }
+
   }
 
   /**
-   * This method cannot be called directly.
+   * Invoked when a key has been released.
+   * See the class description for {@link KeyEvent} for a definition of
+   * a key released event.
+   *
+   * @param e
    */
   @Override
   public void keyReleased(KeyEvent e) {
-    synchronized (keyLock) {
-      keysDown.remove(e.getKeyCode());
+
+  }
+
+  /**
+   * Invoked when the mouse button has been clicked (pressed
+   * and released) on a component.
+   *
+   * @param e
+   */
+  @Override
+  public void mouseClicked(MouseEvent e) {
+
+  }
+
+  /**
+   * Invoked when a mouse button has been pressed on a component.
+   *
+   * @param e
+   */
+  @Override
+  public void mousePressed(MouseEvent e) {
+
+  }
+
+  /**
+   * Invoked when a mouse button has been released on a component.
+   *
+   * @param e
+   */
+  @Override
+  public void mouseReleased(MouseEvent e) {
+
+  }
+
+  /**
+   * Invoked when the mouse enters a component.
+   *
+   * @param e
+   */
+  @Override
+  public void mouseEntered(MouseEvent e) {
+
+  }
+
+  /**
+   * Invoked when the mouse exits a component.
+   *
+   * @param e
+   */
+  @Override
+  public void mouseExited(MouseEvent e) {
+
+  }
+
+  /**
+   * Invoked when a mouse button is pressed on a component and then
+   * dragged.  <code>MOUSE_DRAGGED</code> events will continue to be
+   * delivered to the component where the drag originated until the
+   * mouse button is released (regardless of whether the mouse position
+   * is within the bounds of the component).
+   * <p>
+   * Due to platform-dependent Drag&amp;Drop implementations,
+   * <code>MOUSE_DRAGGED</code> events may not be delivered during a native
+   * Drag&amp;Drop operation.
+   *
+   * @param e
+   */
+  @Override
+  public void mouseDragged(MouseEvent e) {
+
+  }
+
+  /**
+   * Invoked when the mouse cursor has been moved onto a component
+   * but no buttons have been pushed.
+   *
+   * @param e
+   */
+  @Override
+  public void mouseMoved(MouseEvent e) {
+
+  }
+}
+
+
+/**
+ * Aligns functionality of closing window with red X in top corner and quitting
+ * from the file menu.
+ */
+class CloseAction extends AbstractAction {
+  private final JFrame mainFrame;
+
+
+  /**
+   * Todo: insert javadoc comment.
+   *
+   * @param mainFrame
+   */
+  public CloseAction(JFrame mainFrame) {
+    super("Exit");
+    putValue(MNEMONIC_KEY, KeyEvent.VK_X);
+    this.mainFrame = mainFrame;
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    confirmClosing();
+  }
+
+  public void confirmClosing() {
+    int confirmed = JOptionPane.showConfirmDialog(mainFrame,
+        "Are you sure you want to quit?", "Confirm quit",
+        JOptionPane.YES_NO_OPTION);
+    if (confirmed == JOptionPane.YES_OPTION) {
+      // clean up code
+      System.exit(0);
     }
   }
 }
