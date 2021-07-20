@@ -14,6 +14,7 @@
       <sourceFolder url="file://$MODULE_DIR$/res" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/src/DrawingApp" />
       <excludeFolder url="file://$MODULE_DIR$/src/graphics_src" />
+      <excludeFolder url="file://$MODULE_DIR$/src/guiDesign" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -2,6 +2,7 @@ package com.company;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -15,9 +16,49 @@ import java.util.List;
  */
 public class PartLibrary {
   static HashMap<String, Part> lib;
+  static List<Part> partList;
+  //measurement labels:
+  private static int start_inside;
+  private static int start_outside;
+  private static int end_inside;
+  private static int end_outside;
+
+  public static int getStartInside() {
+    return start_inside;
+  }
+
+  public static void setStartInside(int index) {
+    start_inside = index;
+  }
+
+  public static int getStartOutside() {
+    return start_outside;
+  }
+
+  public static void setStartOutside(int index) {
+    start_outside = index;
+  }
+
+  public static int getEndInside() {
+    return end_inside;
+  }
+
+  public static void setEndInside(int index) {
+    end_inside = index;
+  }
+
+  public static int getEndOutside() {
+    return end_outside;
+  }
+
+  public static void setEndOutside(int index) {
+    end_outside = index;
+  }
+
 
   PartLibrary() {
     lib = new HashMap<>();
+    partList = new ArrayList<>();
   }
 
   /**
@@ -97,6 +138,26 @@ public class PartLibrary {
    */
   public Part removePart(String name) {
     return lib.remove(name);
+  }
+
+
+  //inclusive distance
+  public static double calcDistIncludingEndpts(List<Part> partList, int start, int end) {
+    double dist = 0.0;
+    if (start <= end) {
+      for (int i = start; i <= end; i++) {
+        dist += partList.get(i).getWidth();
+      }
+      return dist;
+    } else {
+      return calcDistIncludingEndpts(partList, end, start);
+    }
+
+  }
+
+  //TODO: implement calculate distance function - inclusive for both ends: i.e. from beginning of part 1 to end of part 2 if index of p1 < index p2
+  public static double calcDist(int index1, int index2) {
+    return calcDistIncludingEndpts(partList, index1, index2);
   }
 
 

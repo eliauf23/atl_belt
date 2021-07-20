@@ -8,16 +8,13 @@ import java.io.IOException;
 public class Main {
 
 
-  final static int CANVAS_WIDTH = 2048;
-  final static int CANVAS_HEIGHT = 2048;
-  final static int SCALE = 100;
-
-  static double Y_CENTER = SCALE / 2.0;
-  static double shaft_len = 0.0;
-
   public static void main(String[] args) throws IOException {
-    setup(CANVAS_WIDTH, CANVAS_HEIGHT, SCALE);
+    setup();
     openFileAndDrawContents();
+    //for testing purposes
+    //drawMeasurements(true, true, true);
+    //Draw.text(20, SCALE/2.0, Part.convertResultsToString(sumOfWidths, billOfMaterials));
+
   }
 
 }

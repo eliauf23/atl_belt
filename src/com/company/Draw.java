@@ -1,9 +1,8 @@
 package com.company;
 
-import static com.company.Main.shaft_len;
+import static com.company.Measurement.displayResults;
 import static com.company.Part.calcSumOfWidths;
 import static com.company.Part.convertFileToPartList;
-import static com.company.Part.displayResults;
 import static com.company.Part.drawPartsFromList;
 import static com.company.Part.drawShaft;
 
@@ -14,12 +13,13 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -27,6 +27,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -35,7 +37,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -43,10 +44,12 @@ import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -62,6 +65,19 @@ import javax.swing.UIManager;
  * Based on StdDraw class from princeton intro CS course website & standard library.
  */
 public class Draw implements ActionListener, MouseListener, MouseMotionListener, KeyListener {
+
+  final static int CANVAS_WIDTH = 2048;
+  final static int CANVAS_HEIGHT = 2048;
+
+  public static int getSCALE() {
+    return SCALE;
+  }
+
+  final static int SCALE = 100;
+
+  static double Y_CENTER = SCALE / 2.0;
+
+  static double shaft_len = 0.0;
 
   //List of colors available for 2D Graphics
   public static final Color BLACK = Color.BLACK;
@@ -93,7 +109,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
 
   // default canvas size is square w/ side len. = DEFAULT_SIZE
-  private static final int DEFAULT_SIZE = 512;
+  private static final int DEFAULT_SIZE = 2048;
 
   // default pen radius
 
@@ -116,37 +132,63 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
   //singleton for callbacks: avoids generation of extra .class files
   private static final Draw std = new Draw();
+  // mouse state
+  private static final boolean isMousePressed = false;
+  private static final double mouseX = 0;
+  private static final double mouseY = 0;
   protected static String titleString = "Atlantic Belt - Roller Spec. Application";
   private static Color penColor;
+
+  public static double getPenRadius() {
+    return penRadius;
+  }
+
   private static double penRadius;
+
+  public static int getWidth() {
+    return width;
+  }
+
+  public static int getHeight() {
+    return height;
+  }
+
   private static int width = DEFAULT_SIZE;
   private static int height = DEFAULT_SIZE;
   private static Font font;
+
   // show we draw immediately or wait until next time show() is called?
   private static boolean defer = false; //enableDoubleBuffer() will set defer = true
   private static double xmin;
   private static double ymin;
   private static double xmax;
   private static double ymax;
+
   // double-buffered graphics (can animate drawing - if desired)
   private static BufferedImage offscreenImage;
   private static BufferedImage onscreenImage;
+
+
   private static Graphics2D offscreen;
   private static Graphics2D onscreen;
-  // the frame for drawing to the screen
-  private static JFrame frame;
+
+//create separate buffered images for measurements & text (so you can clear and redraw when necessary)
+ /* private static BufferedImage currentAnnotationsImage;
+  private static BufferedImage updatedAnnotationsImage;
+
+  private static Graphics2D currentAnnotationsGraphics;
+  private static Graphics2D updatedAnnotationsGraphics;*/
+
   //menuItems
   private static JTextArea output;
   private static JScrollPane scrollPane;
-  // mouse state
-  private static final boolean isMousePressed = false;
-  private static final double mouseX = 0;
-  private static final double mouseY = 0;
   // queue of typed key characters
   private static LinkedList<Character> keysTyped;
   // set of key codes currently pressed down
   private static TreeSet<Integer> keysDown;
-  private static RuntimeException FileSystemAlreadyExistsException;
+
+  // the frame for drawing to the screen
+  private static JFrame frame;
 
   // static initializer
   static {
@@ -157,25 +199,11 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   Draw() {
   }
 
-  /**
-   * Initialization functions.
-   */
-
-  public static void setCanvasSize(int canvasWidth, int canvasHeight) {
-    if (canvasWidth <= 0) {
-      throw new IllegalArgumentException("width must be positive");
-    }
-    if (canvasHeight <= 0) {
-      throw new IllegalArgumentException("height must be positive");
-    }
-    width = canvasWidth;
-    height = canvasHeight;
-    init();
-  }
-
   // init
   private static void init() {
 
+
+    //set look and feel for user interface
     try {
       UIManager.setLookAndFeel(new FlatDarculaLaf());
     } catch (Exception e) {
@@ -188,11 +216,23 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     if (frame != null) {
       frame.setVisible(false);
     }
+
     frame = new JFrame();
     offscreenImage = new BufferedImage(2 * width, 2 * height, BufferedImage.TYPE_INT_ARGB);
     onscreenImage = new BufferedImage(2 * width, 2 * height, BufferedImage.TYPE_INT_ARGB);
     offscreen = offscreenImage.createGraphics();
     onscreen = onscreenImage.createGraphics();
+/*
+
+    currentAnnotationsImage = new BufferedImage(2 * width, 2 * height, BufferedImage.TYPE_INT_ARGB);
+   updatedAnnotationsImage = new BufferedImage(2 * width, 2 * height, BufferedImage.TYPE_INT_ARGB);
+    currentAnnotationsGraphics = currentAnnotationsImage.createGraphics();
+    updatedAnnotationsGraphics = updatedAnnotationsImage.createGraphics();
+
+
+
+    */
+
     offscreen.scale(2.0, 2.0);  // since we made it 2x as big
 
     setXscale();
@@ -235,9 +275,37 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
 
     frame.setJMenuBar(createMenuBar());
+    initMeasurementLayer();
     frame.pack();
     frame.requestFocusInWindow();
     frame.setVisible(true);
+  }
+
+  /**
+   * Sets canvas to be size = specified Width * specified Height.
+   *
+   * @param canvasWidth
+   * @param canvasHeight
+   */
+  public static void setCanvasSize(int canvasWidth, int canvasHeight) {
+    if (canvasWidth <= 0) {
+      throw new IllegalArgumentException("width must be positive");
+    }
+    if (canvasHeight <= 0) {
+      throw new IllegalArgumentException("height must be positive");
+    }
+    width = canvasWidth;
+    height = canvasHeight;
+    init();
+  }
+
+  /**
+   * Sets canvas to be size = specified Width * specified Height.
+   */
+  public static void setCanvasSize() {
+    width = DEFAULT_SIZE;
+    height = DEFAULT_SIZE;
+    init();
   }
 
   /**
@@ -250,19 +318,27 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   public static void setup(int canvasWidth, int canvasHeight, int scale) {
     //Initialize canvas size, scale
     enableDoubleBuffering();
-    Image img = Toolkit.getDefaultToolkit().getImage(JFrame.class.getResource("C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\icons8-drawing-24.png"));
-    frame.setIconImage(img);
+    frame.setIconImage(Toolkit.getDefaultToolkit().getImage("C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\icons8-drawing-24.png"));
+    frame.setVisible(true);
     setCanvasSize(canvasWidth, canvasHeight);
     setScale(0, scale); //i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner
     setPenRadius(0.005);
+  }
 
+  public static void setup() {
+    //Initialize canvas size, scale
+    enableDoubleBuffering();
+    frame.setIconImage(Toolkit.getDefaultToolkit().getImage("C:\\Users\\eliau\\IdeaProjects\\atl_belt\\input\\icons8-drawing-24.png"));
+    setCanvasSize();
+    setScale(0, SCALE); //i.e. x and y range from 0, 100 w/ (0,0) in bottom left corner
+    setPenRadius(0.005);
   }
 
 
   // create the menu bar (changed to protected)
   protected static JMenuBar createMenuBar() {
     JMenuBar menuBar;
-    JMenu fileMenu, editMenu, helpMenu, submenu;
+    JMenu fileMenu, editMenu, helpMenu, submenu, showOrHideMenu, measureMenu;
     JMenuItem menuItemFileOpen, menuItemFileSave, menuItemFileExit;
 
     menuBar = new JMenuBar();
@@ -295,7 +371,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
 
 //start by creating file menu and Mnemonic for keybinding
-    fileMenu = new JMenu("File");
+    fileMenu = new JMenu(" File");
     fileMenu.setMnemonic(KeyEvent.VK_F);
     menuBar.add(fileMenu);
 
@@ -332,7 +408,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
 
     //second file menu item (Open)
-    menuItemFileOpen = new JMenuItem(" Open text file   ", KeyEvent.VK_O);
+    menuItemFileOpen = new JMenuItem(" Open text file  ", KeyEvent.VK_O);
     menuItemFileOpen.addActionListener(e2 -> {
       try {
         openFileAndDrawContents();
@@ -343,9 +419,10 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     menuItemFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
     fileMenu.add(menuItemFileOpen);
 
-    //third file menu item (Exit)
 
-    menuItemFileExit = new JMenuItem(" Exit      ", KeyEvent.VK_Q);
+    //last file menu item (Exit)
+
+    menuItemFileExit = new JMenuItem(" Exit     ", KeyEvent.VK_Q);
 
     menuItemFileExit.setAction(closeAction);
 
@@ -364,6 +441,82 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     editMenu = new JMenu("Edit");
 
+
+    /*
+    BEGIN CHECKBOX MENU SETUP
+     */
+
+    //(Measure) - menu Items: inside-inside, outside-outside, shaft length w/ check boxes
+    measureMenu = new JMenu("Measurements");
+    measureMenu.setMnemonic(KeyEvent.VK_M);
+
+
+    JCheckBoxMenuItem shaftMeasurement = new JCheckBoxMenuItem("Shaft length", false);
+    shaftMeasurement.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (shaftMeasurement.getState()) {
+          //drawMeasurement();
+        } else {
+          removeMeasurement();
+        }
+      }
+    });
+
+
+    JCheckBoxMenuItem stdInsideInsideMeasurement = new JCheckBoxMenuItem("Inside-Inside Length", false);
+    stdInsideInsideMeasurement.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (stdInsideInsideMeasurement.getState()) {
+          //drawMeasurement();
+        } else {
+          removeMeasurement();
+        }
+      }
+    });
+
+
+    JCheckBoxMenuItem stdOutsideOutsideMeasurement = new JCheckBoxMenuItem("Outside-Outside Length", false);
+    stdOutsideOutsideMeasurement.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (stdOutsideOutsideMeasurement.getState()) {
+
+          //drawMeasurement();
+        } else {
+          removeMeasurement();
+        }
+      }
+    });
+
+
+    measureMenu.add(shaftMeasurement);
+    measureMenu.add(stdInsideInsideMeasurement);
+    measureMenu.add(stdOutsideOutsideMeasurement);
+
+
+    menuBar.add(measureMenu);
+
+
+    //Display (or Show)? Bill of Materials?
+    showOrHideMenu = new JMenu("Display: (Show/Hide)");
+    showOrHideMenu.setMnemonic(KeyEvent.VK_D);
+
+    JCheckBoxMenuItem showOrHideBillOfMaterials = new JCheckBoxMenuItem("Show Bill of Materials", false);
+    showOrHideBillOfMaterials.addItemListener(e -> {
+      if (showOrHideBillOfMaterials.getState()) {
+      } else {
+        //hide bill of materials
+      }
+
+    });
+    showOrHideMenu.add(showOrHideBillOfMaterials);
+
+
+    menuBar.add(showOrHideMenu);
+
+
     helpMenu = new JMenu("Help");
 
 
@@ -375,18 +528,40 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
 
     menuBar.add(editMenu);
+    menuBar.add(measureMenu);
+    menuBar.add(showOrHideMenu);
+
     JMenuItem editMenuItem1 = new JMenuItem(" About      ");
     editMenu.add(editMenuItem1);
 
     return menuBar;
   }
 
+  protected static void initMeasurementLayer() {
+    JLayeredPane jLayeredPane = new JLayeredPane();
+    jLayeredPane.setBackground(new Color(0, 0, 0, 0));
+    frame.add(jLayeredPane);
+  }
+
+  private static void addText() {
+  }
+
+  private static void removeText() {
+  }
+
+  private static void addMeasurement() {
+  }
+
+  private static void removeMeasurement() {
+  }
+
+
   /***************************************************************************
    *  User and screen coordinate systems.
    ***************************************************************************/
 
   // throw an IllegalArgumentException if x is NaN or infinite
-  private static void validate(double x, String name) {
+  static void validate(double x, String name) {
     if (Double.isNaN(x)) {
       throw new IllegalArgumentException(name + " is NaN");
     }
@@ -501,11 +676,11 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
 
   // helper functions that scale from user coordinates to screen coordinates and back
-  private static double scaleX(double x) {
+  static double scaleX(double x) {
     return width * (x - xmin) / (xmax - xmin);
   }
 
-  private static double scaleY(double y) {
+  static double scaleY(double y) {
     return height * (ymax - y) / (ymax - ymin);
   }
 
@@ -545,6 +720,26 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     offscreen.fillRect(0, 0, width, height);
     offscreen.setColor(penColor);
     draw();
+  }
+
+  /**
+   * Get shaft length (as specified in input file).
+   *
+   * @return shaft-length as a double var.
+   */
+  public static double getShaftLength() {
+    return shaft_len;
+  }
+
+  /**
+   * Set shaft length.
+   *
+   * @param shaft_len
+   * @assert shaft_len > 0.
+   */
+  public static void setShaftLength(double shaft_len) {
+    validateNonnegative(shaft_len, "shaft length");
+    Draw.shaft_len = shaft_len;
   }
 
   /**
@@ -661,6 +856,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     onscreen.drawImage(offscreenImage, 0, 0, null);
     frame.repaint();
   }
+
 
   // draw onscreen if defer is false
   private static void draw() {
@@ -803,6 +999,91 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     offscreen.fillRect((int) Math.round(scaleX(x)), (int) Math.round(scaleY(y)), 1, 1);
   }
 
+
+  /**
+   * Draws a point centered at (<em>x</em>, <em>y</em>).
+   * The point is a filled circle whose radius is equal to the pen radius.
+   * To draw a single-pixel point, first set the pen radius to 0.
+   *
+   * @param x the <em>x</em>-coordinate of the point
+   * @param y the <em>y</em>-coordinate of the point
+   * @throws IllegalArgumentException if either {@code x} or {@code y} is either NaN or infinite
+   */
+  public static void point(double x, double y) {
+    validate(x, "x");
+    validate(y, "y");
+
+    double xs = scaleX(x);
+    double ys = scaleY(y);
+    double r = penRadius;
+    float scaledPenRadius = (float) (r * DEFAULT_SIZE);
+
+    // double ws = factorX(2*r);
+    // double hs = factorY(2*r);
+    // if (ws <= 1 && hs <= 1) pixel(x, y);
+    if (scaledPenRadius <= 1) {
+      pixel(x, y);
+    } else {
+      offscreen.fill(new Ellipse2D.Double(xs - scaledPenRadius / 2, ys - scaledPenRadius / 2,
+          scaledPenRadius, scaledPenRadius));
+    }
+    draw();
+  }
+
+  /**
+   * Draws a circle of the specified radius, centered at (<em>x</em>, <em>y</em>).
+   *
+   * @param x      the <em>x</em>-coordinate of the center of the circle
+   * @param y      the <em>y</em>-coordinate of the center of the circle
+   * @param radius the radius of the circle
+   * @throws IllegalArgumentException if {@code radius} is negative
+   * @throws IllegalArgumentException if any argument is either NaN or infinite
+   */
+  public static void circle(double x, double y, double radius) {
+    validate(x, "x");
+    validate(y, "y");
+    validate(radius, "radius");
+    validateNonnegative(radius, "radius");
+
+    double xs = scaleX(x);
+    double ys = scaleY(y);
+    double ws = factorX(2 * radius);
+    double hs = factorY(2 * radius);
+    if (ws <= 1 && hs <= 1) {
+      pixel(x, y);
+    } else {
+      offscreen.draw(new Ellipse2D.Double(xs - ws / 2, ys - hs / 2, ws, hs));
+    }
+    draw();
+  }
+
+  /**
+   * Draws a filled circle of the specified radius, centered at (<em>x</em>, <em>y</em>).
+   *
+   * @param x      the <em>x</em>-coordinate of the center of the circle
+   * @param y      the <em>y</em>-coordinate of the center of the circle
+   * @param radius the radius of the circle
+   * @throws IllegalArgumentException if {@code radius} is negative
+   * @throws IllegalArgumentException if any argument is either NaN or infinite
+   */
+  public static void filledCircle(double x, double y, double radius) {
+    validate(x, "x");
+    validate(y, "y");
+    validate(radius, "radius");
+    validateNonnegative(radius, "radius");
+
+    double xs = scaleX(x);
+    double ys = scaleY(y);
+    double ws = factorX(2 * radius);
+    double hs = factorY(2 * radius);
+    if (ws <= 1 && hs <= 1) {
+      pixel(x, y);
+    } else {
+      offscreen.fill(new Ellipse2D.Double(xs - ws / 2, ys - hs / 2, ws, hs));
+    }
+    draw();
+  }
+
   /**
    * Draws a line.
    *
@@ -820,6 +1101,50 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     offscreen.draw(new Line2D.Double(scaleX(x0), scaleY(y0), scaleX(x1), scaleY(y1)));
     draw();
   }
+
+  /**
+   * Draws a filled polygon with the vertices
+   * (<em>x</em><sub>0</sub>, <em>y</em><sub>0</sub>),
+   * (<em>x</em><sub>1</sub>, <em>y</em><sub>1</sub>), ...,
+   * (<em>x</em><sub><em>n</em>–1</sub>, <em>y</em><sub><em>n</em>–1</sub>).
+   *
+   * @param x an array of all the <em>x</em>-coordinates of the polygon
+   * @param y an array of all the <em>y</em>-coordinates of the polygon
+   * @throws IllegalArgumentException unless {@code x[]} and {@code y[]}
+   *                                  are of the same length
+   * @throws IllegalArgumentException if any coordinate is either NaN or infinite
+   * @throws IllegalArgumentException if either {@code x[]} or {@code y[]} is {@code null}
+   */
+  public static void filledPolygon(double[] x, double[] y) {
+    validateNotNull(x, "x-coordinate array");
+    validateNotNull(y, "y-coordinate array");
+    for (int i = 0; i < x.length; i++) {
+      validate(x[i], "x[" + i + "]");
+    }
+    for (int i = 0; i < y.length; i++) {
+      validate(y[i], "y[" + i + "]");
+    }
+
+    int n1 = x.length;
+    int n2 = y.length;
+    if (n1 != n2) {
+      throw new IllegalArgumentException("arrays must be of the same length");
+    }
+    int n = n1;
+    if (n == 0) {
+      return;
+    }
+
+    GeneralPath path = new GeneralPath();
+    path.moveTo((float) scaleX(x[0]), (float) scaleY(y[0]));
+    for (int i = 0; i < n; i++) {
+      path.lineTo((float) scaleX(x[i]), (float) scaleY(y[i]));
+    }
+    path.closePath();
+    offscreen.fill(path);
+    draw();
+  }
+
 
   /**
    * Draws a filled rectangle of the specified size, centered at (<em>x</em>, <em>y</em>).
@@ -850,6 +1175,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
     }
     draw();
   }
+
 
   /**
    * Draws a rectangle of the specified size, centered at (<em>x</em>, <em>y</em>).
@@ -947,13 +1273,17 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     if (status == JFileChooser.APPROVE_OPTION) {
       selectedFile = fileChooser.getSelectedFile();
-      List<Part> partList = convertFileToPartList(selectedFile);
+      PartLibrary.partList = convertFileToPartList(selectedFile);
       HashMap<String, Integer> billOfMaterials = new HashMap<>();
-      PartLibrary.createBillOfMaterials(billOfMaterials, partList);
-      double sumOfWidths = calcSumOfWidths(partList);
+      PartLibrary.createBillOfMaterials(billOfMaterials, PartLibrary.partList);
+      double sumOfWidths = calcSumOfWidths(PartLibrary.partList);
       drawShaft(shaft_len);
-      drawPartsFromList(partList, sumOfWidths);
+      drawPartsFromList(PartLibrary.partList, sumOfWidths);
+      //TODO: might need to put measurement drawing
       displayResults(sumOfWidths, billOfMaterials);
+
+
+      show();
     } else if (status == JFileChooser.CANCEL_OPTION) {
       System.out.println("User cancelled open file dialogue.");
       //do nothing

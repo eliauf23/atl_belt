@@ -1,7 +1,8 @@
 package com.company;
 
-import static com.company.Main.SCALE;
-import static com.company.Main.Y_CENTER;
+import static com.company.Draw.SCALE;
+import static com.company.Draw.Y_CENTER;
+import static com.company.Draw.setShaftLength;
 
 import java.awt.Color;
 import java.io.File;
@@ -19,6 +20,15 @@ public class Part {
   private Color color;
   private double height;
   private double width;
+
+
+  Part() {
+    this.name = "default part";
+    this.height = 0.0;
+    this.width = 0.0;
+    this.color = Draw.BLACK;
+
+  }
 
   //default constructor
   Part(String str, HashMap<String, Part> map) {
@@ -67,6 +77,7 @@ public class Part {
   }
 
   public static void drawPart(Part p, double currentXvalue) {
+    //TODO: want to draw parts such that each part is a clickable object where you can get info and see that it's selected
     double height = p.getHeight();
     double width = p.getWidth();
     Color color = p.getColor();
@@ -81,6 +92,7 @@ public class Part {
     Draw.filledRectangle(SCALE / 2.0, SCALE / 2.0, shaftLength / 2.0, 0.25);
   }
 
+
   public static List<Part> convertFileToPartList(File file) throws IOException {
     PartLibrary pl = new PartLibrary();
     //TODO: replace with method that gets part library from text file
@@ -89,25 +101,7 @@ public class Part {
     HashMap<String, Part> library = PartLibrary.lib;
 
     List<String> lines = Files.readAllLines(file.toPath());
-    List<Part> partList = new ArrayList<>();
-
-    int index = 0;
-    for (String str : lines) {
-      if (index == 0 && str != null) {
-        if (Double.parseDouble(str) > 0) {
-          Main.shaft_len = Double.parseDouble(str);
-        }
-      } else {
-        //trim any whitespace & add Part obj. to array list
-        assert (str != null);
-        Part p = new Part(str.trim(), library);
-
-        partList.add(p);
-      }
-
-      index++;
-    }
-    return partList;
+    return setupPartsLibrary(library, lines);
   }
 
   public static List<Part> convertFileToPartList(String fileName) throws IOException {
@@ -119,14 +113,21 @@ public class Part {
     HashMap<String, Part> library = PartLibrary.lib;
 
     List<String> lines = Files.readAllLines(Paths.get(fileName));
+    return setupPartsLibrary(library, lines);
+  }
+
+  private static List<Part> setupPartsLibrary(HashMap<String, Part> library, List<String> lines) {
     List<Part> partList = new ArrayList<>();
 
     int index = 0;
     for (String str : lines) {
       if (index == 0 && str != null) {
         if (Double.parseDouble(str) > 0) {
-          Main.shaft_len = Double.parseDouble(str);
+          setShaftLength(Double.parseDouble(str));
         }
+      } else if (index == 1 && str != null) {
+        //second line should specify outside_start, inside_start, inside_end, outside_end
+        Measurement.setMeasurementIndices(str);
       } else {
         //trim any whitespace & add Part obj. to array list
         assert (str != null);
@@ -140,22 +141,6 @@ public class Part {
     return partList;
   }
 
-  public static void displayResults(double sumOfWidths, HashMap<String, Integer> billOfMaterials) {
-    Draw.show();
-    System.out.println("\nResults:");
-    System.out.println("Sum of all widths: " + sumOfWidths);
-    System.out.println("Bill of Materials: " + billOfMaterials.toString());
-
-  }
-
-  //inclusive distance (index starts @ 0, ends at # of components - 1
-  public static double calcDistIncludingEndpts(List<Part> partList, int start, int end) {
-    double dist = 0.0;
-    for (int i = start; i <= end - 1; i++) {
-      dist += partList.get(i).getWidth();
-    }
-    return dist;
-  }
 
   //getter & setter methods
   public double getHeight() {
