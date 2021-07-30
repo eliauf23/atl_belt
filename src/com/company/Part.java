@@ -1,15 +1,17 @@
 package com.company;
 
-import static com.company.Draw.SCALE;
-import static com.company.Draw.Y_CENTER;
+
+import static com.company.Draw.getDrawMeasurement;
+import static com.company.Draw.getPartLibrary;
+import static com.company.Draw.getScale;
+import static com.company.Draw.getYCenter;
 import static com.company.Draw.setShaftLength;
 
+import com.company.Resources.myColors;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,6 +20,7 @@ public class Part {
 
   private String name;
   private Color color;
+  private Color breakoutColor; //for exploded view - meant to contrast
   private double height;
   private double width;
 
@@ -26,7 +29,7 @@ public class Part {
     this.name = "default part";
     this.height = 0.0;
     this.width = 0.0;
-    this.color = Draw.BLACK;
+    this.color = myColors.BLACK;
 
   }
 
@@ -55,9 +58,11 @@ public class Part {
   }
 
 
-  public static void drawPartsFromList(List<Part> partList, double totalWidth) {
+  public static void drawPartsFromList(PartLibrary partLibrary) {
+    List<Part> partList = partLibrary.getPartList();
+    double totalWidth = partLibrary.getSumOfWidths();
 
-    double currentXvalue = 0.5 * (SCALE - totalWidth + partList.get(0).getWidth());
+    double currentXvalue = 0.5 * (getScale() - totalWidth + partList.get(0).getWidth());
     double halfWidth;
 
     for (Part p : partList) {
@@ -68,57 +73,30 @@ public class Part {
     }
   }
 
-  public static double calcSumOfWidths(List<Part> partList) {
-    double sumOfWidths = 0.0;
-    for (Part p : partList) {
-      sumOfWidths += p.getWidth();
-    }
-    return sumOfWidths;
-  }
-
   public static void drawPart(Part p, double currentXvalue) {
     //TODO: want to draw parts such that each part is a clickable object where you can get info and see that it's selected
     double height = p.getHeight();
     double width = p.getWidth();
     Color color = p.getColor();
     Draw.setPenColor(color);
-    Draw.filledRectangle(currentXvalue, Y_CENTER, width / 2.0, height / 2.0);
+    Draw.filledRectangle(currentXvalue, getYCenter(), width / 2.0, height / 2.0);
   }
 
 
   public static void drawShaft(double shaftLength) {
     //default thickness = 1 & default color is light grey
-    Draw.setPenColor(Draw.LIGHT_GRAY);
-    Draw.filledRectangle(SCALE / 2.0, SCALE / 2.0, shaftLength / 2.0, 0.25);
+    Draw.setPenColor(myColors.LIGHT_GRAY);
+    Draw.filledRectangle(getScale() / 2.0, getScale() / 2.0, shaftLength / 2.0, 0.25);
   }
 
 
-  public static List<Part> convertFileToPartList(File file) throws IOException {
-    PartLibrary pl = new PartLibrary();
+  public static void convertFileToPartList(File file) throws IOException {
     //TODO: replace with method that gets part library from text file
-    pl.setupPartLibraryWithTestParts();
-
-    HashMap<String, Part> library = PartLibrary.lib;
-
-    List<String> lines = Files.readAllLines(file.toPath());
-    return setupPartsLibrary(library, lines);
+    initializeFieldsInPartLibraryFromFile(getPartLibrary(), Files.readAllLines(file.toPath()));
   }
 
-  public static List<Part> convertFileToPartList(String fileName) throws IOException {
-    PartLibrary pl = new PartLibrary();
-
-    //TODO: replace with method that gets part library from text file
-    pl.setupPartLibraryWithTestParts();
-
-    HashMap<String, Part> library = PartLibrary.lib;
-
-    List<String> lines = Files.readAllLines(Paths.get(fileName));
-    return setupPartsLibrary(library, lines);
-  }
-
-  private static List<Part> setupPartsLibrary(HashMap<String, Part> library, List<String> lines) {
-    List<Part> partList = new ArrayList<>();
-
+  private static void initializeFieldsInPartLibraryFromFile(PartLibrary partLibrary, List<String> lines) {
+    List<Part> partList = partLibrary.getPartList();
     int index = 0;
     for (String str : lines) {
       if (index == 0 && str != null) {
@@ -127,18 +105,15 @@ public class Part {
         }
       } else if (index == 1 && str != null) {
         //second line should specify outside_start, inside_start, inside_end, outside_end
-        Measurement.setMeasurementIndices(str);
+        getDrawMeasurement().setMeasurementIndices(getPartLibrary(), str);
       } else {
         //trim any whitespace & add Part obj. to array list
         assert (str != null);
-        Part p = new Part(str.trim(), library);
-
-        partList.add(p);
+        partList.add(new Part(str.trim(), partLibrary.getLibHashMap()));
       }
 
       index++;
     }
-    return partList;
   }
 
 
@@ -181,7 +156,7 @@ public class Part {
   @Override
   public boolean equals(Object obj) throws NullPointerException {
 
-    Part p = new Part(0, 0, Draw.BLACK);
+    Part p = new Part(0, 0, myColors.BLACK);
     if (obj != null && obj.getClass() == p.getClass()) {
       Part objPart = (Part) obj;
       return objPart.getHeight() == (this.getHeight()) && objPart.getWidth() == (this.getWidth());

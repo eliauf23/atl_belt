@@ -1,5 +1,6 @@
 package com.company;
 
+import com.company.Resources.myColors;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,68 +16,97 @@ import java.util.List;
  * Currently, part library is hard coded as a HashMap with KEY=str, VALUE = parts.
  */
 public class PartLibrary {
-  static HashMap<String, Part> lib;
-  static List<Part> partList;
+  HashMap<String, Part> lib;
+  List<Part> partList;
+  double sumOfWidths;
+
+
   //measurement labels:
-  private static int start_inside;
-  private static int start_outside;
-  private static int end_inside;
-  private static int end_outside;
-
-  public static int getStartInside() {
-    return start_inside;
-  }
-
-  public static void setStartInside(int index) {
-    start_inside = index;
-  }
-
-  public static int getStartOutside() {
-    return start_outside;
-  }
-
-  public static void setStartOutside(int index) {
-    start_outside = index;
-  }
-
-  public static int getEndInside() {
-    return end_inside;
-  }
-
-  public static void setEndInside(int index) {
-    end_inside = index;
-  }
-
-  public static int getEndOutside() {
-    return end_outside;
-  }
-
-  public static void setEndOutside(int index) {
-    end_outside = index;
-  }
-
+  private int start_inside;
+  private int start_outside;
+  private int end_inside;
+  private int end_outside;
 
   PartLibrary() {
-    lib = new HashMap<>();
-    partList = new ArrayList<>();
+    this.lib = new HashMap<>();
+    this.partList = new ArrayList<>();
+    sumOfWidths = 0.0;
+  }
+
+  public double getSumOfWidths() {
+    return sumOfWidths;
+  }
+
+  public void setSumOfWidths() {
+    double result = 0.0;
+    for (Part p : this.partList) {
+      result += p.getWidth();
+    }
+    this.sumOfWidths = result;
   }
 
   /**
    * Creates bill of materials from partList.
    * Puts stuff into bill of materials hash map that's passed in by reference as a param
-   *
-   * @param billOfMaterials lists parts & amounts of respective parts in design.
-   * @param partList        list.
    */
-  public static void createBillOfMaterials(HashMap<String,
-      Integer> billOfMaterials, List<Part> partList) {
-    for (Part p : partList) {
+  public HashMap<String, Integer> createBillOfMaterials() {
+    HashMap<String, Integer> billOfMaterials = new HashMap<>();
+    for (Part p : this.partList) {
       if (billOfMaterials.containsKey(p.getName())) {
         billOfMaterials.put(p.getName(), billOfMaterials.get(p.getName()) + 1);
       } else {
         billOfMaterials.put(p.getName(), 1);
       }
     }
+    return billOfMaterials;
+  }
+
+  public void setLibrary(HashMap<String, Part> lib) {
+    this.lib = lib;
+  }
+
+  public HashMap<String, Part> getLibHashMap() {
+    return lib;
+  }
+
+  public List<Part> getPartList() {
+    return partList;
+  }
+
+  public void setPartList(List<Part> partList) {
+    this.partList = partList;
+  }
+
+  public int getStartInside() {
+    return start_inside;
+  }
+
+  public void setStartInside(int index) {
+    start_inside = index;
+  }
+
+  public int getStartOutside() {
+    return start_outside;
+  }
+
+  public void setStartOutside(int index) {
+    start_outside = index;
+  }
+
+  public int getEndInside() {
+    return end_inside;
+  }
+
+  public void setEndInside(int index) {
+    end_inside = index;
+  }
+
+  public int getEndOutside() {
+    return end_outside;
+  }
+
+  public void setEndOutside(int index) {
+    end_outside = index;
   }
 
   /**
@@ -98,12 +128,12 @@ public class PartLibrary {
    * "name"=(<height></height>, <width></width>, <color></color>).
    */
   public void setupPartLibraryWithTestParts() {
-
-    this.addPart("washer", 1.0, 0.5, Draw.BLACK);
-    this.addPart("disk", 4.0, 1.0, Draw.DARK_GRAY);
-    this.addPart("gasket", 2.0, 1.0, Draw.PRINCETON_ORANGE);
-    this.addPart("std_spacer", 2.0, 3.5, Draw.MEDIUM_BLUE);
-    this.addPart("short_spacer", 2.0, 2.0, Draw.CYAN);
+    this.addPart("diff", 1.0, 0.5, myColors.WHITE);
+    this.addPart("washer", 1.0, 0.5, myColors.BLACK);
+    this.addPart("disk", 4.0, 1.0, myColors.DARK_GRAY);
+    this.addPart("gasket", 2.0, 1.0, myColors.PRINCETON_ORANGE);
+    this.addPart("std_spacer", 2.0, 3.5, myColors.MEDIUM_BLUE);
+    this.addPart("short_spacer", 2.0, 2.0, myColors.CYAN);
     //TODO: remove this after I figure out how to read in input from text file
   }
 
@@ -113,7 +143,7 @@ public class PartLibrary {
    * (will get a console message saying that you've added two parts with
    * different names & the same specifications.
    */
-  private void addPart(String name, double height, double width, Color color) {
+  public void addPart(String name, double height, double width, Color color) {
 
     if (!lib.containsKey(name) && height > 0 && width > 0) {
       lib.put(name, new Part(height, width, color));
@@ -139,26 +169,5 @@ public class PartLibrary {
   public Part removePart(String name) {
     return lib.remove(name);
   }
-
-
-  //inclusive distance
-  public static double calcDistIncludingEndpts(List<Part> partList, int start, int end) {
-    double dist = 0.0;
-    if (start <= end) {
-      for (int i = start; i <= end; i++) {
-        dist += partList.get(i).getWidth();
-      }
-      return dist;
-    } else {
-      return calcDistIncludingEndpts(partList, end, start);
-    }
-
-  }
-
-  //TODO: implement calculate distance function - inclusive for both ends: i.e. from beginning of part 1 to end of part 2 if index of p1 < index p2
-  public static double calcDist(int index1, int index2) {
-    return calcDistIncludingEndpts(partList, index1, index2);
-  }
-
 
 }
