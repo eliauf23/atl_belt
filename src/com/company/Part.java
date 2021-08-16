@@ -18,6 +18,8 @@ import java.util.List;
 
 public class Part {
 
+  //TODO: add additional field for display color & need to distinguish between customer & warehouse version of drawing.
+
   private String name;
   private Color color;
   private Color breakoutColor; //for exploded view - meant to contrast

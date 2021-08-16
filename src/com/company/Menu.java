@@ -161,37 +161,29 @@ public class Menu {
   private static ActionListener getActionListener(String itemName) {
 
     if (itemName.toLowerCase().contains("save")) {
-      return new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          JFileChooser fileChooser = null;
-          try {
-            fileChooser = launchSaveFileDialogue();
-          } catch (RuntimeException | IOException exception) {
-            exception.printStackTrace();
-          }
-
-          assert fileChooser != null;
-          int status = fileChooser.showSaveDialog(null);
-          fileChooser.setVisible(true);
-
-          if (status == JFileChooser.APPROVE_OPTION) {
-            File fileToSave = fileChooser.getSelectedFile();
-            String fileName = fileToSave.getAbsolutePath();
-            Draw.save(fileName);
-          }
-
-
+      return e -> {
+        JFileChooser fileChooser = null;
+        try {
+          fileChooser = launchSaveFileDialogue();
+        } catch (RuntimeException | IOException exception) {
+          exception.printStackTrace();
         }
+
+        assert fileChooser != null;
+        int status = fileChooser.showSaveDialog(null);
+        fileChooser.setVisible(true);
+
+        if (status == JFileChooser.APPROVE_OPTION) {
+          File fileToSave = fileChooser.getSelectedFile();
+          String fileName = fileToSave.getAbsolutePath();
+          Draw.save(fileName);
+        }
+
+
       };
 
     } else if (itemName.toLowerCase().contains("open")) {
-      return new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Draw.renderDrawing(getPartLibrary());
-        }
-      };
+      return e -> Draw.renderDrawing(getPartLibrary());
     } else if (itemName.toLowerCase().contains("exit")) {
       return new ActionListener() {
         @Override
