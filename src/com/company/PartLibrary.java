@@ -44,6 +44,7 @@ public class PartLibrary {
       numParts++;
     }
     this.sumOfWidths = result;
+    System.out.println(this.sumOfWidths);
   }
 
   /**
@@ -92,8 +93,8 @@ public class PartLibrary {
    * @throws IOException
    */
   public void setupPartLibraryFromTextFile() throws IOException {
-    File f = FileIO.getTextFileFromUser("Select file with part library: ");
-    initializePartLibraryFromFile(f);
+   // File f = FileIO.getTextFileFromUser("Select file with part library: ");
+    initializePartLibraryFromFile(new File("/Users/Jonathan/roller_files/newLibrary.txt"));
   }
 
 
