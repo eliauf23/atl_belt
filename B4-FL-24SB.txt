@@ -1,0 +1,4 @@
+shaft=28.625
+part_4_4.5 x 1
+part_4_6 x 3
+part_4_4.5 x 1

@@ -1,0 +1,17 @@
+shaft=100
+<m4>
+part_2.5_5 x 5
+gasket_0.25 x 2
+<m1>
+part_4 x 1
+<m2>
+gasket_0.25 x 3
+</m2>
+part_4 x 1
+</m1>
+<m3>
+gasket_0.25 x 2
+</m3>
+part_2.5x5 x 5
+</m4>
+
