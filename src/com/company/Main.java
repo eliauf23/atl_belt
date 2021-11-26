@@ -4,16 +4,24 @@ import static com.company.Draw.getPartLibrary;
 import static com.company.Draw.openFileAndGeneratePartList;
 import static com.company.Draw.setup;
 
-import java.io.IOException;
-
 public class Main {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
+
     setup();
-    PartLibrary partLib = Draw.getPartLibrary();
-    partLib.setupPartLibraryWithTestParts();
-    openFileAndGeneratePartList(getPartLibrary());
-    partLib.setSumOfWidths();
-    Draw.renderDrawing(partLib);
+    Draw.getPartLibrary().setupPartLibraryFromTextFile();
+
+    try {
+
+      openFileAndGeneratePartList(getPartLibrary());
+
+      Draw.getPartLibrary().setSumOfWidths();
+      Draw.renderDrawing(Draw.getPartLibrary());
+
+    } catch (Exception exception) {
+      System.err.println(exception.toString());
+      exception.printStackTrace();
+    }
+
   }
 }

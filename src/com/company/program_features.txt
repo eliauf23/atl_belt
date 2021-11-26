@@ -1,7 +1,10 @@
-- specify shift diameter (for display mode): objective is to create diagram for assembly purposes (not customer)
+- specify shift diameter (for display mode):
+
+objective is to create diagram for assembly purposes (not customer)
 - toggle in DISPLAY MENU to shift between "catalog" and "assembly views"
 - additional display measurement calculations i.e vertical maximum diameter (height?)
 - other measurements:
+
 >>> (1) outside-to-outside disk
 >>> (2) maximum diameter (height) outside-to-outide
 >>> (3) maximum diameter ^ inside-to-inside
@@ -11,3 +14,4 @@
 
 
 also generate part library from text file functionality
+ls

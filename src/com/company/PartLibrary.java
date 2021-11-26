@@ -1,35 +1,37 @@
 package com.company;
 
-import com.company.Resources.myColors;
+import static com.company.myColors.MyColors.getColor;
+
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 
 //TODO: create library of parts as a list of strings
-//make a hashmap with key = name (String) & value = part (Part)
 
 /**
  * Class used to build library of parts from text file (end goal).
  * Currently, part library is hard coded as a HashMap with KEY=str, VALUE = parts.
  */
 public class PartLibrary {
+
+  /* Fields */
   HashMap<String, Part> lib;
   List<Part> partList;
+  List<Measurement> measurementList;
   double sumOfWidths;
+  int numParts;
 
-
-  //measurement labels:
-  private int start_inside;
-  private int start_outside;
-  private int end_inside;
-  private int end_outside;
+  /* Constructors */
 
   PartLibrary() {
     this.lib = new HashMap<>();
     this.partList = new ArrayList<>();
+    this.measurementList = new ArrayList<>();
     sumOfWidths = 0.0;
   }
 
@@ -41,6 +43,7 @@ public class PartLibrary {
     double result = 0.0;
     for (Part p : this.partList) {
       result += p.getWidth();
+      numParts++;
     }
     this.sumOfWidths = result;
   }
@@ -73,68 +76,40 @@ public class PartLibrary {
     return partList;
   }
 
+  public List<Measurement> getMeasurementList() {
+    return measurementList;
+  }
+
   public void setPartList(List<Part> partList) {
     this.partList = partList;
   }
 
-  public int getStartInside() {
-    return start_inside;
-  }
-
-  public void setStartInside(int index) {
-    start_inside = index;
-  }
-
-  public int getStartOutside() {
-    return start_outside;
-  }
-
-  public void setStartOutside(int index) {
-    start_outside = index;
-  }
-
-  public int getEndInside() {
-    return end_inside;
-  }
-
-  public void setEndInside(int index) {
-    end_inside = index;
-  }
-
-  public int getEndOutside() {
-    return end_outside;
-  }
-
-  public void setEndOutside(int index) {
-    end_outside = index;
-  }
 
   /**
    * Create part library from text file where each line has the format:
    * "name"=(<height></height>, <width></width>, <color></color>).
    *
-   * @param fileName name of file.
    * @throws IOException
    */
-  public void setupPartLibraryFromTextFile(String fileName) throws IOException {
-    //TODO: implement this method
-    //first use FileCollector? to get file from user input into dialogue box.
-    //next parse thru file line by line & tokenize into name, height, width, color
-    //then,
+  public void setupPartLibraryFromTextFile() throws IOException {
+    File f = FileIO.getTextFileFromUser("Select file with part library: ");
+    initializePartLibraryFromFile(f);
   }
 
-  /**
-   * Create part library from text file where each line has the format:
-   * "name"=(<height></height>, <width></width>, <color></color>).
-   */
-  public void setupPartLibraryWithTestParts() {
-    this.addPart("diff", 1.0, 0.5, myColors.WHITE);
-    this.addPart("washer", 1.0, 0.5, myColors.BLACK);
-    this.addPart("disk", 4.0, 1.0, myColors.DARK_GRAY);
-    this.addPart("gasket", 2.0, 1.0, myColors.PRINCETON_ORANGE);
-    this.addPart("std_spacer", 2.0, 3.5, myColors.MEDIUM_BLUE);
-    this.addPart("short_spacer", 2.0, 2.0, myColors.CYAN);
-    //TODO: remove this after I figure out how to read in input from text file
+
+  public void initializePartLibraryFromFile(File file) throws IOException {
+    List<String> lines = Files.readAllLines(file.toPath());
+
+    for (String line : lines) {
+      //tokenize string into "string", height, width, color
+      String[] tokens = line.split(" ", 5);
+
+      //TODO: need to make sure arguments are valid
+
+
+      addPart(tokens[0], Double.parseDouble(tokens[1]), Double.parseDouble(tokens[2]), getColor(tokens[3]), getColor(tokens[4]));
+    }
+    System.out.println("Part Library is initialized");
   }
 
   /**
@@ -143,10 +118,10 @@ public class PartLibrary {
    * (will get a console message saying that you've added two parts with
    * different names & the same specifications.
    */
-  public void addPart(String name, double height, double width, Color color) {
+  public void addPart(String name, double height, double width, Color color, Color greyscaleColor) {
 
     if (!lib.containsKey(name) && height > 0 && width > 0) {
-      lib.put(name, new Part(height, width, color));
+      lib.put(name, new Part(height, width, color, greyscaleColor));
     } else {
       System.out.println("Error: part with this name is already in library "
           + "OR height or width of part <= 0");
@@ -170,4 +145,7 @@ public class PartLibrary {
     return lib.remove(name);
   }
 
+  public void drawMeasurementArrows() {
+    //todo: implement!
+  }
 }

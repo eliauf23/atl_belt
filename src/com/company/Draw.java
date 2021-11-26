@@ -1,11 +1,9 @@
 package com.company;
 
 import static com.company.Menu.createMenuBar;
-import static com.company.Part.convertFileToPartList;
 import static com.company.Part.drawPartsFromList;
 import static com.company.Part.drawShaft;
 
-import com.company.Resources.myColors;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLaf;
 import java.awt.BasicStroke;
@@ -27,7 +25,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.TreeSet;
@@ -60,6 +57,8 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   private static final double DEFAULT_YMAX = 1.0;
   // default font
   private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 16);
+  private static final Font MEASUREMENT_FONT = new Font("SansSerif", Font.PLAIN, 12);
+
   //singleton for callbacks: avoids generation of extra .class files
   private static final Draw std = new Draw();
   private static final Object mouseLock = new Object();
@@ -94,6 +93,17 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
   private static PartLibrary partLibrary;
   private static DrawMeasurement drawMeasurement;
+  private static boolean isGreyscale = false;
+
+
+  public static boolean isGreyscale() {
+    return isGreyscale;
+  }
+
+  public static void setGreyscale(boolean greyscale) {
+    System.out.println("set Greyscale " + greyscale);
+    isGreyscale = greyscale;
+  }
 
 
   // static initializer
@@ -134,7 +144,7 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
 
     setXscale();
     setYscale();
-    offscreen.setColor(myColors.WHITE);
+    offscreen.setColor(Color.WHITE);
     offscreen.fillRect(0, 0, width, height);
     setPenColor();
     setPenRadius();
@@ -488,7 +498,11 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    * @throws IllegalArgumentException if {@code color} is {@code null}
    */
   public static void setPenColor(Color color) {
-    validateNotNull(color, "color");
+    try {
+      validateNotNull(color, "color");
+    } catch (IllegalArgumentException e) {
+      color = Color.BLACK;
+    }
     penColor = color;
     offscreen.setColor(penColor);
   }
@@ -547,6 +561,10 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    */
   public static void setFont() {
     setFont(DEFAULT_FONT);
+  }
+
+  public static void setMeasurementFont() {
+    setFont(MEASUREMENT_FONT);
   }
 
 
@@ -934,19 +952,6 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
   }
 
   /**
-   * Method launches window with file open dialogue.
-   *
-   * @return JFileChooser object created to open file specified by user.
-   */
-  public static JFileChooser launchFileOpenDialogue() {
-    JFileChooser fileChooser = new JFileChooser((File) null);
-    //fileChooser.addActionListener(e -> System.out.println());
-    fileChooser.addActionListener(e -> System.out.println("File loading ..."));
-
-    return fileChooser;
-  }
-
-  /**
    * Todo: insert javadoc comment.
    *
    * @return
@@ -969,33 +974,11 @@ public class Draw implements ActionListener, MouseListener, MouseMotionListener,
    * method opens file using JFileChooser framework, and if able to successfully open
    * file & parse data -> converts to list & draws components.
    */
-  public static void openFileAndGeneratePartList(PartLibrary partLibrary) throws IOException {
+  public static void openFileAndGeneratePartList(PartLibrary partLibrary) throws Exception {
 
-    File selectedFile;
+    File selectedFile = FileIO.getTextFileFromUser("Open file to generate image");
+    Part.generatePartListFromNewFile(selectedFile, getPartLibrary());
 
-    JFileChooser fileChooser = launchFileOpenDialogue();
-    int status = fileChooser.showOpenDialog(null);
-
-    if (status == JFileChooser.APPROVE_OPTION) {
-      selectedFile = fileChooser.getSelectedFile();
-      try {
-        convertFileToPartList(selectedFile);
-      } catch (IOException ioException) {
-        ioException.printStackTrace();
-      }
-
-    } else if (status == JFileChooser.CANCEL_OPTION) {
-      System.out.println("User cancelled open file dialogue.");
-      //do nothing
-      //throw new FileNotFoundException();
-    } else {
-      throw new FileNotFoundException();
-    }
-  }
-
-
-  public static void main(String[] args) {
-    System.out.println("draw class test");
   }
 
   /**

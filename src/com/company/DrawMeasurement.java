@@ -5,32 +5,38 @@ import static com.company.Draw.getScale;
 import static com.company.Draw.getShaftLength;
 import static com.company.Draw.getYCenter;
 import static com.company.Draw.renderDrawing;
+import static com.company.Draw.setGreyscale;
 import static com.company.Draw.setPenColor;
 import static com.company.Draw.setPenRadius;
+import static com.company.Draw.show;
 
-import com.company.Resources.myColors;
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 class DrawMeasurement {
 
 
-  static final String insideLabel = "inside-inside";
+  static final String measurementsLabel = "display measurements";
   static final String outsideLabel = "outside-outside";
   static final String shaftLenLabel = "shaft length";
   static final String billOfMatLabel = "bill of materials";
+  static final String greyscaleLabel = "Greyscale Mode";
 
   private boolean showShaftLen;
-  private boolean showInside;
+  private boolean measurements;
   private boolean showOutside;
   private boolean showBom;
+  private boolean greyscale;
 
   DrawMeasurement() {
     showShaftLen = false;
-    showInside = false;
+    measurements = false;
     showOutside = false;
     showBom = false;
+    greyscale = false;
 
   }
 
@@ -63,12 +69,12 @@ class DrawMeasurement {
     this.showShaftLen = showShaftLen;
   }
 
-  public boolean showInside() {
-    return showInside;
+  public boolean measurements() {
+    return measurements;
   }
 
-  public void setShowInside(boolean showInside) {
-    this.showInside = showInside;
+  public void setmeasurements(boolean measurements) {
+    this.measurements = measurements;
   }
 
   public boolean showOutside() {
@@ -83,24 +89,6 @@ class DrawMeasurement {
     return showBom;
   }
 
-  public void setShowBom(boolean showBom) {
-    this.showBom = showBom;
-  }
-
-  public boolean getStateofItem(String itemName) {
-    if (itemName.equalsIgnoreCase(insideLabel)) {
-      return showInside();
-    } else if (itemName.equalsIgnoreCase(outsideLabel)) {
-      return showOutside();
-    } else if (itemName.equalsIgnoreCase(shaftLenLabel)) {
-      return showShaftLen();
-    } else if (itemName.equalsIgnoreCase(billOfMatLabel)) {
-      return showBom();
-    } else {
-      throw new IllegalArgumentException("trying to get state of item that doesnt exist");
-    }
-  }
-
 
   public void arrow(double x0, double y, double x1, double value, Color color) {
     setPenColor(color);
@@ -110,16 +98,19 @@ class DrawMeasurement {
 
   }
 
-  public void drawMeasurement(PartLibrary partLibrary, String measurementName) {
+  public void drawMeasurement(PartLibrary partLibrary, String name) {
 
-    if (measurementName.equalsIgnoreCase(insideLabel)) {
-      showInside = true;
-    } else if (measurementName.equalsIgnoreCase(outsideLabel)) {
+    if (name.equalsIgnoreCase(measurementsLabel)) {
+      measurements = true;
+    } else if (name.equalsIgnoreCase(outsideLabel)) {
       showOutside = true;
-    } else if (measurementName.equalsIgnoreCase(shaftLenLabel)) {
+    } else if (name.equalsIgnoreCase(shaftLenLabel)) {
       showShaftLen = true;
-    } else if (measurementName.equalsIgnoreCase(billOfMatLabel)) {
+    } else if (name.equalsIgnoreCase(billOfMatLabel)) {
       showBom = true;
+    } else if (name.equalsIgnoreCase(greyscaleLabel)) {
+      greyscale = true;
+      setGreyscale(true);
     } else {
       System.out.println("measurement name does not match any labels");
     }
@@ -130,14 +121,18 @@ class DrawMeasurement {
 
   public void eraseMeasurement(PartLibrary partLibrary, String measurementName) {
 
-    if (measurementName.equalsIgnoreCase(insideLabel)) {
-      showInside = false;
+    if (measurementName.equalsIgnoreCase(measurementsLabel)) {
+      measurements = false;
     } else if (measurementName.equalsIgnoreCase(outsideLabel)) {
       showOutside = false;
     } else if (measurementName.equalsIgnoreCase(shaftLenLabel)) {
       showShaftLen = false;
     } else if (measurementName.equalsIgnoreCase(billOfMatLabel)) {
       showBom = false;
+    } else if (measurementName.equalsIgnoreCase(greyscaleLabel)) {
+      greyscale = false;
+      setGreyscale(false);
+
     } else {
       System.out.println("measurement name does not match any labels");
     }
@@ -148,32 +143,65 @@ class DrawMeasurement {
   private void redraw(PartLibrary partLibrary) {
     Draw.clear();
     renderDrawing(partLibrary);
-    renderMeasurements(this, showInside, showOutside, showShaftLen, showBom);
-    Draw.show();
+    renderMeasurements(this, measurements, showOutside, showShaftLen, showBom, greyscale);
+
+    show();
   }
 
-  void drawMeasurement(DrawMeasurement dm, PartLibrary partLibrary, String type, double x, double y, Color color) {
+  void drawArrowAndLabel(DrawMeasurement dm, PartLibrary partLibrary, String type, double x, double y, Color color) throws Exception {
     double value = 0.0;
 
-    if (type.equalsIgnoreCase(billOfMatLabel)) {
+    if (type.equalsIgnoreCase(billOfMatLabel) || type.equalsIgnoreCase(greyscaleLabel)) {
       return;
     }
+    if (type.equalsIgnoreCase(measurementsLabel)) {
+      List<Measurement> measurementList = partLibrary.getMeasurementList();
+      assert (measurementList != null);
+      Draw.setPenColor(Color.GRAY);
+      setPenRadius(0.0005);
 
+      List<Part> partList = getPartLibrary().partList;
+      for (Measurement m : measurementList) {
+        Part partBegin = partList.get(m.startIdx);
+        Part partEnd = partList.get(m.endIdx);
+        double x_init = partBegin.getX_start();
+        double x_final = partEnd.getX_start();
+        double difference = x_final - x_init;
+        System.out.println("Value: " + value);
+        System.out.println("Diff: " + difference);
 
-    if (type.equalsIgnoreCase(insideLabel)) {
+        Draw.setPenColor(Color.GRAY);
 
-      value = calcDistIncludingEndpts(partLibrary.getPartList(), partLibrary.getStartInside(), partLibrary.getEndInside());
+        Draw.line(x_init, y - 10, x_init, y + 10);
+        Draw.line(x_final, y - 10, x_final, y + 10);
+
+        //find initial x pos of beginning
+
+        //value = calcDistIncludingEndpts(partLibrary.getPartList(), m.startIdx, m.endIdx);
+        Draw.setPenColor(Color.BLACK);
+
+        Draw.line(x_init, y, x_final, y);
+        dm.arrow(x_init + value / 2.0, y, value, value, color);
+        String sb = m.getName() +
+            " = " +
+            value;
+
+        Draw.setMeasurementFont();
+        Draw.text(x_init + value, y + 1, sb);
+        y += 5;
+        show();
+
+      }
+      return;
 
     } else if (type.equalsIgnoreCase(outsideLabel)) {
-      value = calcDistIncludingEndpts(partLibrary.getPartList(), partLibrary.getStartOutside(), partLibrary.getEndOutside());
+      value = calcDistIncludingEndpts(partLibrary.getPartList(), 0, partLibrary.numParts - 1);
 
     } else if (type.equalsIgnoreCase(shaftLenLabel)) {
       value = getShaftLength();
     } else {
       System.out.println("Error: doesn't match any measurement options");
     }
-
-
     Draw.setPenColor(color);
     setPenRadius(0.0005);
     Draw.line(x - value / 2.0, y, x + value / 2.0, y);
@@ -186,66 +214,42 @@ class DrawMeasurement {
         value;
     Draw.text(x, y - 2, sb);
 
-    Draw.show();
+    show();
   }
 
-  public void renderMeasurements(DrawMeasurement dm, boolean inside, boolean outside, boolean shaft, boolean bom) {
+  public void renderMeasurements(DrawMeasurement dm, boolean measurements, boolean outside, boolean shaft, boolean bom, boolean greyscale) {
 
     //where should x and y start?
     double height = 5;
     double x = getScale() / 2.0;
     double y = getYCenter() - height;
 
-    if (inside) {
-      drawMeasurement(dm, getPartLibrary(), insideLabel, x, y, myColors.NAVY_BLUE);
-      y -= height;
-    }
-    if (outside) {
-      drawMeasurement(dm, getPartLibrary(), outsideLabel, x, y, myColors.NAVY_BLUE);
-      y -= height;
-    }
-    if (shaft) {
-      drawMeasurement(dm, getPartLibrary(), shaftLenLabel, x, y, myColors.NAVY_BLUE);
-      y -= height;
-    }
-    if (bom) {
-      drawBillOfMaterials(x, 75, getPartLibrary().createBillOfMaterials());
-    }
-  }
+    try {
 
-  void setMeasurementIndices(PartLibrary partLibrary, String input) {
-    String[] p = input.split(",", 4);
-    int[] ans = new int[4];
-
-    int currentValue = 0;
-    int index = 0;
-    for (String s : p) {
-      if (s != null && index < 4) {
-        s = s.trim();
-        currentValue = Integer.parseInt(s);
-        assert (currentValue >= 0);
-        ans[index] = currentValue;
-        index++;
+      if (measurements) {
+        drawArrowAndLabel(dm, getPartLibrary(), measurementsLabel, x, getYCenter() + height, Color.getColor("blue"));
       }
-    }
-
-    for (int i = 0; i < ans.length; i++) {
-      if (ans[i] == -1) {
-        ans[0] = -1;
-        ans[1] = -1;
-        ans[2] = -1;
-        ans[3] = -1;
-        break;
+      if (outside) {
+        drawArrowAndLabel(dm, getPartLibrary(), outsideLabel, x, y, Color.getColor("blue"));
+        y -= height;
       }
-    }
-    setMeasurementIndicesHelper(partLibrary, ans);
-  }
+      if (shaft) {
+        drawArrowAndLabel(dm, getPartLibrary(), shaftLenLabel, x, y, Color.getColor("blue"));
+        y -= height;
+      }
+      if (bom) {
+        drawBillOfMaterials(x, 75, getPartLibrary().createBillOfMaterials());
+      }
+      if (greyscale) {
+        Part.drawPartsFromList(getPartLibrary());
+      }
 
-  private void setMeasurementIndicesHelper(PartLibrary partLibrary, int[] arr) {
-    partLibrary.setStartOutside(arr[0]);
-    partLibrary.setStartInside(arr[1]);
-    partLibrary.setEndInside(arr[2]);
-    partLibrary.setEndOutside(arr[3]);
+
+    } catch (Exception e) {
+      System.out.println(e.toString());
+      e.printStackTrace();
+    }
+
   }
 
   //inclusive distance
@@ -264,9 +268,17 @@ class DrawMeasurement {
   }
 
   public void drawBillOfMaterials(double x, double y, HashMap<String, Integer> billOfMaterials) {
+    Draw.setPenColor(Color.BLACK);
     Draw.text(x, y, "Bill of Materials: " + billOfMaterials.toString());
+    Iterator<Map.Entry<String, Integer>> iter = billOfMaterials.entrySet().iterator();
 
-    Draw.show();
+    while (iter.hasNext()) {
+      y += 16; //change to look good
+      Map.Entry<String, Integer> entry = iter.next();
+      Draw.text(x, y, entry.getKey() + " : " + entry.getValue().toString());
+    }
+    show();
   }
+
 
 }

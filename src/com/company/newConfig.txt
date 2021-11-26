@@ -1,7 +1,7 @@
 # ignore lines beginning with #
 # first line must be shaft
 # specify parts like: <name> x <quantity>
-# specify measurements by putting <m1> ... <m10> tags beginning before part where measurement starts & after part where measurement ends
+# specify measurements by putting <m1> ... </m1> tags beginning before part where measurement starts & after part where measurement ends
 #html style tag system
 # can leave out or include x 1 & empty lines dont matter
 

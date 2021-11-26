@@ -5,11 +5,8 @@ import static com.company.Draw.getFrame;
 import static com.company.Draw.getPartLibrary;
 import static com.company.Draw.launchSaveFileDialogue;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -62,11 +59,9 @@ public class Menu {
 
     getFrame().add(panel);
     String name, itemName;
-    int keyEvent = 0;
+    int keyEvent;
     JMenu newMenu;
     JMenuItem newMenuItem;
-    JCheckBoxMenuItem newCheckBoxItem;
-
 
     //add file menu;
     name = "File";
@@ -83,6 +78,11 @@ public class Menu {
     keyEvent = KeyEvent.VK_O;
     newMenu.add(createNewMenuItem(itemName, keyEvent));
 
+
+    itemName = " Open LIBRARY file  ";
+    keyEvent = KeyEvent.VK_L;
+    newMenu.add(createNewMenuItem(itemName, keyEvent));
+
     newMenu.addSeparator();
 
     itemName = " Exit     ";
@@ -92,33 +92,6 @@ public class Menu {
     newMenu.add(newMenuItem);
 
 
-    //add edit menu
-    name = "Edit";
-    keyEvent = KeyEvent.VK_E;
-    newMenu = createNewMenu(name, keyEvent);
-    menuBar.add(newMenu);
-
-    //add edit menu items
-    itemName = "Cut";
-    keyEvent = KeyEvent.VK_X;
-    newMenu.add(createNewMenuItem(itemName, keyEvent));
-
-    itemName = "Copy";
-    keyEvent = KeyEvent.VK_C;
-    newMenu.add(createNewMenuItem(itemName, keyEvent));
-
-    itemName = "Paste";
-    keyEvent = KeyEvent.VK_V;
-    newMenu.add(createNewMenuItem(itemName, keyEvent));
-
-    itemName = "Undo";
-    keyEvent = KeyEvent.VK_Z;
-    newMenu.add(createNewMenuItem(itemName, keyEvent));
-
-    itemName = "Redo";
-    keyEvent = KeyEvent.VK_R;
-    newMenu.add(createNewMenuItem(itemName, keyEvent));
-
     //add measure menu
 
     name = "Measure";
@@ -126,18 +99,22 @@ public class Menu {
     newMenu = createNewMenu(name, keyEvent);
     menuBar.add(newMenu);
 
-    //create new draw measurement object to pass into create checkboxitem method
     itemName = "Shaft Length";
     newMenu.add(createNewJMenuCheckBoxMenuItem(itemName));
+
     itemName = "Outside-Outside";
     newMenu.add(createNewJMenuCheckBoxMenuItem(itemName));
-    itemName = "Inside-Inside";
+
+    itemName = "Display Measurements";
     newMenu.add(createNewJMenuCheckBoxMenuItem(itemName));
 
     name = "Display Options";
     keyEvent = KeyEvent.VK_D;
     newMenu = createNewMenu(name, keyEvent);
     menuBar.add(newMenu);
+
+    itemName = "Greyscale Mode";
+    newMenu.add(createNewJMenuCheckBoxMenuItem(itemName));
 
     itemName = "Bill of Materials";
     newMenu.add(createNewJMenuCheckBoxMenuItem(itemName));
@@ -183,16 +160,27 @@ public class Menu {
       };
 
     } else if (itemName.toLowerCase().contains("open")) {
-      return e -> Draw.renderDrawing(getPartLibrary());
+      return e -> {
+        File f = FileIO.getTextFileFromUser(itemName);
+        try {
+          System.out.println("Generating part list from file...");
+          Part.generatePartListFromNewFile(f, getPartLibrary());
+        } catch (Exception exception) {
+          exception.printStackTrace();
+        }
+        System.out.println("Finished creating part list from file!");
+
+        getPartLibrary().setSumOfWidths();
+        getPartLibrary().drawMeasurementArrows();
+        Draw.renderDrawing(getPartLibrary());
+
+      };
     } else if (itemName.toLowerCase().contains("exit")) {
-      return new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          try {
-            //something
-          } catch (Exception exception) {
-            exception.printStackTrace();
-          }
+      return e -> {
+        try {
+          //something
+        } catch (Exception exception) {
+          exception.printStackTrace();
         }
       };
     } else {
@@ -207,19 +195,15 @@ public class Menu {
     newMenuItem.addActionListener(getActionListener(itemName));
     newMenuItem.setAccelerator(KeyStroke.getKeyStroke(keyEvent, InputEvent.CTRL_DOWN_MASK));
     return newMenuItem;
-
   }
 
   private static JCheckBoxMenuItem createNewJMenuCheckBoxMenuItem(String itemName) {
     JCheckBoxMenuItem newCheckBoxItem = new JCheckBoxMenuItem(itemName);
-    newCheckBoxItem.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (newCheckBoxItem.isSelected()) {
-          getDrawMeasurement().drawMeasurement(getPartLibrary(), itemName);
-        } else {
-          getDrawMeasurement().eraseMeasurement(getPartLibrary(), itemName);
-        }
+    newCheckBoxItem.addItemListener(e -> {
+      if (newCheckBoxItem.isSelected()) {
+        getDrawMeasurement().drawMeasurement(getPartLibrary(), itemName);
+      } else {
+        getDrawMeasurement().eraseMeasurement(getPartLibrary(), itemName);
       }
     });
     return newCheckBoxItem;
