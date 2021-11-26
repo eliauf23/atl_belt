@@ -43,7 +43,6 @@ public class Part {
     this.color = map.get(str).getColor();
     this.greyscaleColor = map.get(str).getGreyscaleColor();
     this.position = position;
-
   }
 
 
@@ -113,6 +112,7 @@ public class Part {
       color = p.getGreyscaleColor();
       Draw.setPenColor(color);
       Draw.filledRectangle(currentXvalue, getYCenter(), width / 2.0, height / 2.0);
+      Part.drawBorder(Color.white, 0.001, currentXvalue, width, height);
 
     } else {
       color = p.getColor();

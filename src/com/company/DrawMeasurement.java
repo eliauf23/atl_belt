@@ -12,7 +12,6 @@ import static com.company.Draw.show;
 
 import java.awt.Color;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -161,19 +160,27 @@ class DrawMeasurement {
       setPenRadius(0.0005);
 
       List<Part> partList = getPartLibrary().partList;
+
       for (Measurement m : measurementList) {
+
         Part partBegin = partList.get(m.startIdx);
-        Part partEnd = partList.get(m.endIdx);
+        Part partEnd = partList.get(m.endIdx - 1);
+        if (partEnd.getName().equals("end")) {
+
+          System.out.println("part end is the last part!");
+        }
+
+
         double x_init = partBegin.getX_start();
-        double x_final = partEnd.getX_start();
+        double x_final = partEnd.getX_start() + partEnd.getWidth();
         double difference = x_final - x_init;
         System.out.println("Value: " + value);
         System.out.println("Diff: " + difference);
 
         Draw.setPenColor(Color.GRAY);
 
-        Draw.line(x_init, y - 10, x_init, y + 10);
-        Draw.line(x_final, y - 10, x_final, y + 10);
+        //Draw.line(x_init, y - 10, x_init, y + 10);
+        //Draw.line(x_final, y - 10, x_final, y + 10);
 
         //find initial x pos of beginning
 
@@ -181,13 +188,13 @@ class DrawMeasurement {
         Draw.setPenColor(Color.BLACK);
 
         Draw.line(x_init, y, x_final, y);
-        dm.arrow(x_init + value / 2.0, y, value, value, color);
+        dm.arrow(x_init, y, x_final, difference, color);
         String sb = m.getName() +
             " = " +
-            value;
+            difference;
 
         Draw.setMeasurementFont();
-        Draw.text(x_init + value, y + 1, sb);
+        Draw.text(x_init + difference / 2.0, y + 1, sb);
         y += 5;
         show();
 
@@ -269,15 +276,15 @@ class DrawMeasurement {
 
   public void drawBillOfMaterials(double x, double y, HashMap<String, Integer> billOfMaterials) {
     Draw.setPenColor(Color.BLACK);
-    Draw.text(x, y, "Bill of Materials: " + billOfMaterials.toString());
-    Iterator<Map.Entry<String, Integer>> iter = billOfMaterials.entrySet().iterator();
-
-    while (iter.hasNext()) {
-      y += 16; //change to look good
-      Map.Entry<String, Integer> entry = iter.next();
-      Draw.text(x, y, entry.getKey() + " : " + entry.getValue().toString());
+    Draw.setFont();
+    Draw.text(15, y, "Bill of Materials: ");
+    for (Map.Entry<String, Integer> stringIntegerEntry : billOfMaterials.entrySet()) {
+      y -= 2;
+      Map.Entry<String, Integer> entry = stringIntegerEntry;
+      Draw.text(15, y, entry.getKey() + " : " + entry.getValue().toString());
     }
     show();
+
   }
 
 

@@ -7,7 +7,7 @@ import static com.company.Part.convertFileToPartList;
 import static com.company.Part.drawPartsFromList;
 import static com.company.Part.drawShaft;
 
-import com.company.Resources.myColors;
+import com.company.myColors;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLaf;
 import java.awt.BasicStroke;
@@ -227,7 +227,7 @@ public class Draw1 implements ActionListener, MouseListener, MouseMotionListener
 
   */
 /**
-   * Todo: insert javadoc comment.
+   * insert javadoc comment.
    *
    * @param canvasWidth
    * @param canvasHeight

@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 
 
-//TODO: create library of parts as a list of strings
-
 /**
  * Class used to build library of parts from text file (end goal).
  * Currently, part library is hard coded as a HashMap with KEY=str, VALUE = parts.
@@ -24,7 +22,7 @@ public class PartLibrary {
   List<Part> partList;
   List<Measurement> measurementList;
   double sumOfWidths;
-  int numParts;
+  int numParts = 0;
 
   /* Constructors */
 
@@ -55,10 +53,12 @@ public class PartLibrary {
   public HashMap<String, Integer> createBillOfMaterials() {
     HashMap<String, Integer> billOfMaterials = new HashMap<>();
     for (Part p : this.partList) {
-      if (billOfMaterials.containsKey(p.getName())) {
-        billOfMaterials.put(p.getName(), billOfMaterials.get(p.getName()) + 1);
-      } else {
-        billOfMaterials.put(p.getName(), 1);
+      if (!p.getName().equalsIgnoreCase("end")) {
+        if (billOfMaterials.containsKey(p.getName())) {
+          billOfMaterials.put(p.getName(), billOfMaterials.get(p.getName()) + 1);
+        } else {
+          billOfMaterials.put(p.getName(), 1);
+        }
       }
     }
     return billOfMaterials;
@@ -109,6 +109,8 @@ public class PartLibrary {
 
       addPart(tokens[0], Double.parseDouble(tokens[1]), Double.parseDouble(tokens[2]), getColor(tokens[3]), getColor(tokens[4]));
     }
+    //add end part
+    addPart("end", 0.0, 0.0, getColor("CLEAR"), getColor("CLEAR"));
     System.out.println("Part Library is initialized");
   }
 
