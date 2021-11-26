@@ -179,14 +179,6 @@ class DrawMeasurement {
 
         Draw.setPenColor(Color.GRAY);
 
-        //Draw.line(x_init, y - 10, x_init, y + 10);
-        //Draw.line(x_final, y - 10, x_final, y + 10);
-
-        //find initial x pos of beginning
-
-        //value = calcDistIncludingEndpts(partLibrary.getPartList(), m.startIdx, m.endIdx);
-        Draw.setPenColor(Color.BLACK);
-
         Draw.line(x_init, y, x_final, y);
         dm.arrow(x_init, y, x_final, difference, color);
         String sb = m.getName() +
@@ -277,11 +269,12 @@ class DrawMeasurement {
   public void drawBillOfMaterials(double x, double y, HashMap<String, Integer> billOfMaterials) {
     Draw.setPenColor(Color.BLACK);
     Draw.setFont();
-    Draw.text(15, y, "Bill of Materials: ");
+    y = 60;
+    Draw.text(30, y, "Bill of Materials: ");
     for (Map.Entry<String, Integer> stringIntegerEntry : billOfMaterials.entrySet()) {
       y -= 2;
       Map.Entry<String, Integer> entry = stringIntegerEntry;
-      Draw.text(15, y, entry.getKey() + " : " + entry.getValue().toString());
+      Draw.text(30, y, entry.getKey() + " : " + entry.getValue().toString());
     }
     show();
 
