@@ -1,0 +1,21 @@
+# ignore lines beginning with #
+# first line must be shaft
+# specify parts like: <name> x <quantity>
+# specify measurements by putting <m1> ... </m1> tags beginning before part where measurement starts & after part where measurement ends
+#html style tag system
+# can leave out or include x 1 & empty lines dont matter
+
+shaft=60
+part_2.5 x 5
+gasket x 2
+<m1>
+part_4 x 1
+<m2>
+gasket x 3
+</m2>
+part_4 x 1
+</m1>
+gasket x 2
+part_2.5 x 5
+
+
